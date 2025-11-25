@@ -10,34 +10,25 @@ from sklearn.feature_selection import mutual_info_regression
 # CONFIG
 # ============================================================
 
-# Root directory where your *.hdf5 files live
-DATA_ROOT = Path("/home/klambert/projects/aip-craffel/klambert/sEMG/emg2pose_dataset_mini")  # <-- change this
+DATA_ROOT = Path("/home/klambert/projects/aip-craffel/klambert/sEMG/emg2pose_dataset_mini")
 
-# EMG & pose come from a structured dataset:
-# group "emg2pose" → dataset "timeseries" → fields "emg", "joint_angles"
 GROUP_NAME = "emg2pose"
 TIMESERIES_NAME = "timeseries"
 EMG_FIELD = "emg"
 POSE_FIELD = "joint_angles"
 
-# Sampling frequency (Hz)
 FS = 2000
 
-# Frequency band of interest
 FMIN = 500.0
 FMAX = 850.0
 
-# Windowing (samples)
-WINDOW_SIZE = 256      # ~128 ms
-STEP_SIZE = 128        # 50% overlap
+WINDOW_SIZE = 256     
+STEP_SIZE = 128        
 
-# Limits (to keep it fast)
 MAX_FILES = 5
 MAX_WINDOWS_TOTAL = 20000
 
-# Which pose dimension to use as the label
-POSE_DIM = 0  # 0..19 since joint_angles has shape (T, 20)
-
+POSE_DIM = 0
 
 # ============================================================
 # Load EMG + pose from one file
@@ -49,10 +40,9 @@ def load_emg_and_pose(h5_path: Path):
     group 'emg2pose' / dataset 'timeseries' structured array.
     """
     with h5py.File(h5_path, "r") as f:
-        ts = f[GROUP_NAME][TIMESERIES_NAME][...]   # shape (T,), structured dtype
-        # Each element has fields: 'time', 'joint_angles', 'emg'
-        emg = np.array(ts[EMG_FIELD], dtype=np.float32)           # (T, 16)
-        pose = np.array(ts[POSE_FIELD], dtype=np.float32)         # (T, 20)
+        ts = f[GROUP_NAME][TIMESERIES_NAME][...] 
+        emg = np.array(ts[EMG_FIELD], dtype=np.float32)   
+        pose = np.array(ts[POSE_FIELD], dtype=np.float32)   
     return emg, pose
 
 
