@@ -80,8 +80,8 @@ input_normalization:
 
 defaults:
   - _self_
-  - data_module: pretrain_data_module
-  - task: pretrain_task
-  - scheduler: multi_step_lr
-  - model: FEMBA_pretrain
+  - data_module: multiloader_data_module
+  - task: pretrain_task_LUNA
+  - scheduler: cosine
+  - model: LUNA_base
   - criterion: pretrain_criterion

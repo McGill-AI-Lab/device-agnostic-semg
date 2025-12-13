@@ -1,14 +1,8 @@
 # BioFoundation
 
 <p align="center">
-  <a href="https://arxiv.org/abs/2502.06438">
-    <img src="https://img.shields.io/badge/arXiv-2502.06438-b31b1b.svg" alt="FEMBA Paper">
-  </a>
   <a href="https://arxiv.org/abs/2510.22257">
     <img src="https://img.shields.io/badge/arXiv-2510.22257-b31b1b.svg" alt="LUNA Paper">
-  </a>
-  <a href="https://huggingface.co/thorir/FEMBA">
-    <img src="https://img.shields.io/badge/HuggingFace-FEMBA-%23ffcc4d?logo=huggingface&logoColor=black" alt="Hugging Face: FEMBA">
   </a>
   <a href="https://huggingface.co/thorir/LUNA">
     <img src="https://img.shields.io/badge/HuggingFace-LUNA-%23ffcc4d?logo=huggingface&logoColor=black" alt="Hugging Face: LUNA">
@@ -24,50 +18,15 @@ Authors: Thorir Mar Ingolfsson, Anna Tegon, Berkay Döner, Xiaying Wang, Yawei L
 
 ## About
 
-**BioFoundation** is a flexible and extensible codebase for deep learning with biological signals. This repository is designed to support a variety of research projects, and currently hosts the work of multiple papers on EEG analysis.
+**BioFoundation** is a flexible and extensible codebase for deep learning with biological signals. This repository is designed to support a variety of research projects, and currently hosts the LUNA EEG foundation model.
 
 This repository is built on PyTorch Lightning and Hydra to enable reproducible and scalable research.
 
 ## 🤗 Pretrained Weights on Hugging Face
 
-Looking for ready-to-use weights of models? We host them on Hugging Face:
+Looking for ready-to-use weights? LUNA releases live on Hugging Face:
 
-### Currently available:
-- **FEMBA** ([paper](https://arxiv.org/abs/2502.06438)) [![HF Model Card](https://img.shields.io/badge/Model%20Card-FEMBA-ffcc4d?logo=huggingface&logoColor=black)](https://huggingface.co/thorir/FEMBA)
 - **LUNA** ([paper](https://arxiv.org/abs/2510.22257)) [![HF Model Card](https://img.shields.io/badge/Model%20Card-LUNA-ffcc4d?logo=huggingface&logoColor=black)](https://huggingface.co/thorir/LUNA)
-
-
-#### Why FEMBA?
-- **Scales to long EEG** with linear-time Mamba (no quadratic attention).
-- **Strong results** on TUAB/TUAR/TUSL with ready task-specific checkpoints.
-- **Simple fine-tune path:** set `CHECKPOINT_DIR`, run `+experiment=FEMBA_finetune`.
-
-**➡️ Model hub:** https://huggingface.co/thorir/FEMBA  
-**📄 Model card:** [FEMBA on Hugging Face](https://huggingface.co/thorir/FEMBA) — benchmarks, protocols, and efficiency notes.  
-**📜 Weights license:** CC BY-ND 4.0 (use + redistribute **unmodified** weights with attribution; no redistribution of **modified** weights)  
-**🧑‍🍳 PR-gated improvements:** If you fine-tune internally and want your variant to become an **official** FEMBA release, open a PR with configs, logs, and evals. We’ll review together; if it looks good, we’ll retrain/validate and publish an **official** FEMBA checkpoint.
-**What you’ll find on the hub**
-- `TUAB/` → abnormal EEG (base/large)
-- `TUAR/` → artifact detection (tiny/base/large)
-- `TUSL/` → slowing classification (variants as in the paper)
-
-Quick download with `huggingface_hub`:
-```bash
-pip install huggingface_hub
-```
-```python
-from huggingface_hub import snapshot_download
-
-# downloads all task folders (TUAB/TUAR/TUSL) and safetensors into ./checkpoints/FEMBA
-snapshot_download(repo_id="thorir/FEMBA", repo_type="model", local_dir="checkpoints/FEMBA")
-```
-
-Use the paths directly in your runs, e.g.:
-```bash
-export DATA_PATH=/path/to/data
-export CHECKPOINT_DIR=checkpoints/FEMBA/TUAR/base.safetensors
-python -u run_train.py +experiment=FEMBA_finetune
-```
 
 #### Why LUNA?
 - **Topology-agnostic** EEG via **query-based channel unification** (consistent latent across arbitrary montages).
@@ -163,26 +122,20 @@ To prepare the TUH EEG datasets (see the [official source](https://isip.piconepr
 
 ## How to Run
 ### Pre-training
-To run a pre-training experiment, you can use the `run_train.py` script with the appropriate configuration file. For example in the case of pre-training FEMBA:
-
+Launch LUNA pretraining with the experiment config and select your model size via a config override:
 ```bash
-python -u run_train.py +experiment=FEMBA_pretrain
-
+python -u run_train.py +experiment=LUNA_pretrain /model=LUNA_base
+# or /model=LUNA_large, /model=LUNA_huge
 ```
 
 ### Fine-tuning
-To run a fine-tuning experiment, you can use the `run_train.py` script with the appropriate configuration file. For example in the case of fine-tuning FEMBA:
-
+Fine-tune a pretrained LUNA checkpoint by pointing to the safetensors file and picking the model size:
 ```bash
-python -u run_train.py +experiment=FEMBA_finetune
-
+python -u run_train.py +experiment=LUNA_finetune /model=LUNA_base \
+  pretrained_safetensors_path=/absolute/path/to/checkpoints/LUNA/Base/LUNA_base.safetensors
 ```
 
-> **Tip:** Pretrained FEMBA weights (TUAB/TUAR/TUSL folders) are available on 🤗 Hugging Face:  
-> https://huggingface.co/thorir/FEMBA  
-> Set `CHECKPOINT_DIR` to the desired `.safetensors` (e.g., `.../TUAR/base.safetensors`) before launching.
-
-Note in both cases one needs to make sure that the dataset that specific experiment is using is downloaded and available in the correct path.
+Make sure the datasets referenced by the chosen experiment are downloaded and that `data_module.*.hdf5_file` paths point to your local HDF5 files.
 
 ## Repository Structure
 ```
@@ -230,9 +183,9 @@ We welcome contributions to BioFoundation! If you have a new model, dataset, or 
 python -u run_train.py +experiment=your_experiment_name
 ```
 
-### Contributing improvements to FEMBA weights
+### Contributing improvements to LUNA weights
 We’re excited to see what you build. Because the weights are **CC BY-ND 4.0**, redistribution of **modified** weights (e.g., LoRA/adapters, deltas, pruned or quantized variants) is **not permitted**.  
-If you fine-tune internally and believe your results should become an **official** FEMBA release, please open a PR with:
+If you fine-tune internally and believe your results should become an **official** LUNA release, please open a PR with:
 - exact **configs**, **seeds**, and **training scripts**,
 - **environment** and **hardware** details,
 - **evaluation protocol** (TUAB/TUAR/TUSL), **splits**, and full **metrics** (AUROC/AUPR/BA, FLOPs, memory),
@@ -266,15 +219,6 @@ If you find this work useful, please cite the respective papers:
 
 
 ```bibtex
-@misc{tegon2025fembaefficientscalableeeg,
-      title={FEMBA: Efficient and Scalable EEG Analysis with a Bidirectional Mamba Foundation Model}, 
-      author={Anna Tegon and Thorir Mar Ingolfsson and Xiaying Wang and Luca Benini and Yawei Li},
-      year={2025},
-      eprint={2502.06438},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2502.06438}, 
-}
 @inproceedings{doner2025luna,
   title={{LUNA}: Efficient and Topology-Agnostic Foundation Model for {EEG} Signal Analysis},
   author={Berkay D{\"o}ner and Thorir Mar Ingolfsson and Luca Benini and Yawei Li},
@@ -288,5 +232,4 @@ If you find this work useful, please cite the respective papers:
 This project is licensed under the Apache License 2.0. See the [LICENSE](./LICENSE) file for details.
 
 
-**Note on model weights:** Pretrained weights are hosted at https://huggingface.co/thorir/FEMBA and https://huggingface.co/thorir/LUNA and licensed under **CC BY-ND 4.0**. You may use and redistribute the **unmodified** weights with attribution. Redistribution of **modified** weights is not permitted. To upstream improvements, please open a PR; accepted changes will be released as **official** checkpoints.
-
+**Note on model weights:** Pretrained weights are hosted at https://huggingface.co/thorir/LUNA and licensed under **CC BY-ND 4.0**. You may use and redistribute the **unmodified** weights with attribution. Redistribution of **modified** weights is not permitted. To upstream improvements, please open a PR; accepted changes will be released as **official** checkpoints.
