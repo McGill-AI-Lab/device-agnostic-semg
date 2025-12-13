@@ -10,28 +10,36 @@ from sklearn.feature_selection import mutual_info_regression
 # CONFIG
 # ============================================================
 
-DATA_ROOT = Path("/home/klambert/projects/aip-craffel/klambert/sEMG/emg2pose_dataset_mini")
+DATA_ROOT = Path("/home/klambert/projects/aip-craffel/klambert/sEMG/emg2pose_dataset_mini") 
 
 GROUP_NAME = "emg2pose"
 TIMESERIES_NAME = "timeseries"
 EMG_FIELD = "emg"
 POSE_FIELD = "joint_angles"
 
-FS = 2000
-
-FMIN = 500.0
-FMAX = 850.0
-
-WINDOW_SIZE = 256     
-STEP_SIZE = 128        
+FS = 2000                   # sampling frequency (Hz)
+WINDOW_SIZE = 256           # samples (~128 ms)
+STEP_SIZE = 128             # 50% overlap
 
 MAX_FILES = 5
 MAX_WINDOWS_TOTAL = 20000
 
-POSE_DIM = 0
+POSE_DIM = 0                # which joint angle to use as label
+
+# 100 Hz bins from 0–1000 Hz
+BANDS_100 = [
+    (f"{lo:03d}-{hi:03d}", float(lo), float(hi))
+    for lo, hi in zip(range(0, 1000, 100), range(100, 1100, 100))
+]   # ("000-100", 0, 100), ("100-200", 100, 200), ... , ("900-1000", 900, 1000)
+
+# Special band 500–850 Hz
+SPECIAL_BANDS = [
+    ("500-850", 500.0, 850.0),
+]
+
 
 # ============================================================
-# Load EMG + pose from one file
+# DATA LOADER
 # ============================================================
 
 def load_emg_and_pose(h5_path: Path):
@@ -40,27 +48,27 @@ def load_emg_and_pose(h5_path: Path):
     group 'emg2pose' / dataset 'timeseries' structured array.
     """
     with h5py.File(h5_path, "r") as f:
-        ts = f[GROUP_NAME][TIMESERIES_NAME][...] 
-        emg = np.array(ts[EMG_FIELD], dtype=np.float32)   
-        pose = np.array(ts[POSE_FIELD], dtype=np.float32)   
+        ts = f[GROUP_NAME][TIMESERIES_NAME][...]   # shape (T,), structured dtype
+        emg = np.array(ts[EMG_FIELD], dtype=np.float32)         # (T, 16)
+        pose = np.array(ts[POSE_FIELD], dtype=np.float32)       # (T, 20)
     return emg, pose
 
 
 # ============================================================
-# Bandpower features 500–850 Hz
+# FEATURE / LABEL EXTRACTION
 # ============================================================
 
 def extract_bandpower_features(emg: np.ndarray,
+                               fmin: float,
+                               fmax: float,
                                fs: int = FS,
-                               fmin: float = FMIN,
-                               fmax: float = FMAX,
                                window_size: int = WINDOW_SIZE,
                                step_size: int = STEP_SIZE):
     """
-    emg: (T, C) array
-    returns:
-        X   : (num_windows, C) bandpower in [fmin, fmax]
-        idx : (num_windows,) center indices for label alignment
+    For each window and channel, compute bandpower in [fmin, fmax] Hz.
+    Returns:
+        X   : (num_windows, C)
+        idx : (num_windows,) center indices (to align labels)
     """
     T, C = emg.shape
     feats = []
@@ -93,19 +101,9 @@ def extract_bandpower_features(emg: np.ndarray,
     return X, idx
 
 
-# ============================================================
-# Label extraction
-# ============================================================
-
 def extract_labels_for_windows(pose: np.ndarray,
                                centers: np.ndarray,
                                pose_dim: int = POSE_DIM):
-    """
-    pose: (T, D)
-    centers: (num_windows,) indices
-    returns:
-        y: (num_windows,) pose scalar
-    """
     T, D = pose.shape
     assert 0 <= pose_dim < D
     centers = np.clip(centers, 0, T - 1)
@@ -114,35 +112,33 @@ def extract_labels_for_windows(pose: np.ndarray,
 
 
 # ============================================================
-# Collect dataset from multiple files
+# DATASET BUILDING FOR A GIVEN BAND
 # ============================================================
 
-def collect_dataset(root: Path,
-                    max_files: int = MAX_FILES,
-                    max_windows_total: int = MAX_WINDOWS_TOTAL):
+def collect_dataset_for_band(root: Path,
+                             fmin: float,
+                             fmax: float,
+                             max_files: int = MAX_FILES,
+                             max_windows_total: int = MAX_WINDOWS_TOTAL):
     """
-    Scan for .hdf5 files, extract bandpower features + labels.
+    For a given frequency band [fmin, fmax], build (X, y) over several files.
     """
     files = sorted(list(root.rglob("*.hdf5")) + list(root.rglob("*.h5")))
     if not files:
-        raise FileNotFoundError(f"No .hdf5 or .h5 files under {root}")
+        raise FileNotFoundError(f"No .hdf5 or .h5 files found under {root}")
 
-    print(f"Found {len(files)} HDF5 files")
     files = files[:max_files]
-    print(f"Using first {len(files)} files")
+    print(f"  Using {len(files)} files for band {fmin}-{fmax} Hz")
 
     X_list = []
     y_list = []
     total_windows = 0
 
-    for i, path in enumerate(files, start=1):
-        print(f"[{i}/{len(files)}] {path}")
+    for path in files:
         emg, pose = load_emg_and_pose(path)
-        print(f"  emg shape:  {emg.shape}")
-        print(f"  pose shape: {pose.shape}")
 
-        X_file, centers = extract_bandpower_features(emg)
-        y_file = extract_labels_for_windows(pose, centers)
+        X_file, centers = extract_bandpower_features(emg, fmin=fmin, fmax=fmax)
+        y_file = extract_labels_for_windows(pose, centers, pose_dim=POSE_DIM)
 
         remaining = max_windows_total - total_windows
         if remaining <= 0:
@@ -156,56 +152,71 @@ def collect_dataset(root: Path,
         y_list.append(y_file)
 
         total_windows += X_file.shape[0]
-        print(f"  collected {X_file.shape[0]} windows (total {total_windows})")
 
         if total_windows >= max_windows_total:
             break
 
     if not X_list:
-        raise RuntimeError("No windows collected – check paths/settings")
+        raise RuntimeError(f"No windows collected for band {fmin}-{fmax}")
 
     X_all = np.vstack(X_list)
     y_all = np.concatenate(y_list)
-    print(f"\nFinal dataset: X={X_all.shape}, y={y_all.shape}")
     return X_all, y_all
 
 
 # ============================================================
-# Mutual information
+# MUTUAL INFORMATION
 # ============================================================
 
 def compute_mutual_information(X: np.ndarray, y: np.ndarray):
     """
     MI between each channel's bandpower and pose scalar.
     """
-    # log transform to stabilize then z-score
+    # stabilize scale: log1p + z-score
     X_log = np.log1p(X)
     X_mean = X_log.mean(axis=0, keepdims=True)
     X_std = X_log.std(axis=0, keepdims=True) + 1e-8
     X_norm = (X_log - X_mean) / X_std
 
-    print("\nComputing mutual information...")
     mi = mutual_info_regression(X_norm, y, random_state=0)
     return mi
 
 
 # ============================================================
-# Main
+# MAIN: SWEEP BANDS
 # ============================================================
 
 def main():
     if not DATA_ROOT.exists():
-        raise FileNotFoundError(f"{DATA_ROOT} does not exist – update DATA_ROOT")
+        raise FileNotFoundError(f"{DATA_ROOT} does not exist – update DATA_ROOT at the top")
 
-    X, y = collect_dataset(DATA_ROOT)
-    mi = compute_mutual_information(X, y)
+    # All bands we want to test:
+    all_bands = BANDS_100 + SPECIAL_BANDS
 
-    print("\n=== Mutual information per EMG channel (500–850 Hz bandpower vs pose_dim) ===")
-    for ch, val in enumerate(mi):
-        print(f"Channel {ch:2d}: MI ≈ {val:.4f}")
+    results = []  # (name, fmin, fmax, total_mi, mean_mi, per_channel_mi)
 
-    print(f"\nTotal MI (sum over channels): {mi.sum():.4f}")
-    print("You can change POSE_DIM or FMIN/FMAX at the top and re-run to compare bands/labels.")
+    for name, fmin, fmax in all_bands:
+        print(f"\n=== Band {name} Hz ({fmin}-{fmax}) ===")
+        X, y = collect_dataset_for_band(DATA_ROOT, fmin, fmax)
+        mi = compute_mutual_information(X, y)
+
+        total_mi = float(mi.sum())
+        mean_mi = float(mi.mean())
+
+        print(f"  X shape: {X.shape}, y shape: {y.shape}")
+        print(f"  per-channel MI: {', '.join(f'{v:.3f}' for v in mi)}")
+        print(f"  TOTAL MI across channels: {total_mi:.4f}")
+        print(f"  MEAN MI across channels:  {mean_mi:.4f}")
+
+        results.append((name, fmin, fmax, total_mi, mean_mi, mi))
+
+    # After running, you can interpret:
+    #   - which 100 Hz bins carry most MI
+    #   - how the 500–850 band compares to the sum/mean of others
+
+    print("\n=== Summary (by band) ===")
+    for name, fmin, fmax, total_mi, mean_mi, mi in results:
+        print(f"{name:8s} [{fmin:5.1f}-{fmax:5.1f}] Hz  -> total MI={total_mi:.4f}, mean MI={mean_mi:.4f}")
 
 
 if __name__ == "__main__":
