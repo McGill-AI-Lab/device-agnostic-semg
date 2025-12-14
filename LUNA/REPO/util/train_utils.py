@@ -1,3 +1,49 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                   TRAIN_UTILS.PY - TRAINING UTILITIES                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Utility functions for training: checkpoint management and robust data normalization.
+
+KEY FUNCTIONS & CLASSES:
+   
+   1. find_last_checkpoint_path(checkpoint_dir):
+      - Searches for "last.ckpt" in checkpoint directory
+      - Used to resume training from last saved state
+      - Returns None if no checkpoint found
+      - Compatible with PyTorch Lightning checkpoint naming
+   
+   2. RobustQuartileNormalize:
+      - Normalizes EEG signals using interquartile range (IQR)
+      - Formula: (x - q_lower) / (q_upper - q_lower)
+      - More robust to outliers than z-score normalization
+      - Configured with quartile values (e.g., 0.025, 0.975)
+      
+      Why IQR normalization?
+      - EEG often has artifacts (large spikes, movement)
+      - Standard z-score sensitive to outliers
+      - IQR focuses on central distribution, ignores extremes
+      - Example: q_lower=0.025, q_upper=0.975 → use central 95% of data
+
+USAGE:
+   
+   Resume Training:
+   ```python
+   checkpoint_path = find_last_checkpoint_path(cfg.checkpoint_dir)
+   trainer.fit(model, datamodule, ckpt_path=checkpoint_path)
+   ```
+   
+   Normalize Input:
+   ```python
+   normalizer = RobustQuartileNormalize(q_lower=0.025, q_upper=0.975)
+   x_normalized = normalizer(x_raw)
+   ```
+
+RELATED FILES:
+   - run_train.py: Uses find_last_checkpoint_path for resume
+   - tasks/*: Use RobustQuartileNormalize for input preprocessing
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

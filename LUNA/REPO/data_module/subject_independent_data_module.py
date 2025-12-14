@@ -1,3 +1,54 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          SUBJECT_INDEPENDENT_DATA_MODULE.PY - CROSS-SUBJECT SPLITS           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   DataModule for subject-independent evaluation where train/val/test are split by
+   subject/trial ID rather than random sampling. Ensures no subject leakage across splits.
+
+HIGH-LEVEL OVERVIEW:
+   In many EEG experiments (e.g., SEED-V emotion recognition), proper evaluation requires
+   testing on unseen subjects. This module:
+   1. Reads trial_id from each sample's metadata
+   2. Assigns samples to train/val/test based on trial_id thresholds
+   3. Ensures subject-independent splits (no data leakage)
+   4. Concatenates multiple datasets while preserving split boundaries
+
+KEY CLASSES:
+   
+   SubjectIndependentDataModule(pl.LightningDataModule):
+   - Requires datasets with read_info() method returning trial_id
+   - Splits based on trial_id ranges (not random sampling)
+   - Supports datasets with or without explicit test sets
+   - Concatenates all train splits, val splits, test splits separately
+
+SPLITTING LOGIC:
+   For each dataset:
+   1. Read train_size, val_size, test_size from dataset
+   2. For each sample, check its trial_id:
+      - trial_id <= train_size → training set
+      - train_size < trial_id <= train_size + val_size → validation set
+      - trial_id > train_size + val_size → test set
+   3. If test_size == 0: use validation set for testing
+   
+   This ensures subjects in training never appear in val/test.
+
+TYPICAL USAGE:
+   Used for:
+   - SEED-V emotion recognition (subject-independent protocol)
+   - Any task requiring cross-subject generalization
+   - Datasets where subjects/trials are explicitly indexed
+   
+   Not used for:
+   - Random train/val/test splits (use FinetuneDataModule)
+   - Simple time-series splits (use PretrainDataModule)
+
+RELATED FILES:
+   - datasets/seed_v_dataset.py: Implements trial_id-based indexing
+   - tasks/finetune_task_LUNA.py: Can use this for evaluation
+   - config/data_module/subject_independent_data_module.yaml: Configuration
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

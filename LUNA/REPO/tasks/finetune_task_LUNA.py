@@ -1,3 +1,110 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          FINETUNE_TASK_LUNA.PY - SUPERVISED CLASSIFICATION TASK              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   PyTorch Lightning task for fine-tuning pretrained LUNA on downstream EEG
+   classification tasks (TUAB, TUAR, TUSL, SEED-V, etc.).
+
+HIGH-LEVEL OVERVIEW:
+   After pretraining, LUNA is adapted to specific classification tasks:
+   1. Load pretrained weights (safetensors or checkpoint)
+   2. Replace reconstruction head with classification head
+   3. Optionally freeze encoder layers (feature-based) or finetune all (end-to-end)
+   4. Train with labeled data using cross-entropy loss
+   5. Evaluate with comprehensive metrics (AUROC, AUPR, F1, etc.)
+
+KEY CLASS:
+   
+   FinetuneTask(pl.LightningModule):
+   - Wraps LUNA model with num_classes>0 (classification mode)
+   - Loads pretrained weights excluding decoder parts
+   - Supports multiple classification types:
+     * bc: Binary Classification (e.g., TUAB normal/abnormal)
+     * mc: Multi-Label for TUAR (multiple artifact types)
+     * mcc: Multi-Class Classification (e.g., TUSL seizure types)
+     * mmc: Multi-Class Multi-Output (complex labeling)
+   - Tracks extensive metrics for evaluation
+   - Implements layer-wise learning rate decay
+
+KEY METHODS:
+   
+   1. load_safetensors_checkpoint(model_ckpt):
+      - Loads pretrained encoder weights
+      - Filters out decoder_head and channel_emb (not needed for classification)
+      - Sets trainable parameters based on freeze_layers config
+   
+   2. _step(X, mask, channel_locations):
+      - Forward pass through model
+      - Post-processes outputs based on classification_type:
+        * Softmax for single-label classification
+        * Sigmoid for multi-label classification
+      - Returns labels, probabilities, and logits
+   
+   3. training_step / validation_step / test_step:
+      - Normalize input if configured
+      - Generate fake mask (no masking during finetuning)
+      - Compute predictions
+      - Calculate classification loss
+      - Update and log metrics
+
+CLASSIFICATION TYPES EXPLAINED:
+   
+   bc (Binary Classification):
+   - 2 classes (e.g., normal/abnormal in TUAB)
+   - Loss: Cross-Entropy
+   - Output: Softmax probabilities
+   
+   mc (Multi-Label for TUAR):
+   - Multiple binary outputs (artifact present/absent)
+   - Loss: Binary Cross-Entropy with Logits
+   - Output: Sigmoid per label
+   
+   mcc (Multi-Class Classification):
+   - K mutually exclusive classes (e.g., TUSL: background/slow/seizure)
+   - Loss: Cross-Entropy
+   - Output: Softmax over classes
+   
+   mmc (Multi-Class Multi-Output):
+   - Multiple groups of mutually exclusive classes
+   - Output reshaped to [B, num_groups, classes_per_group]
+
+TRANSFER LEARNING STRATEGIES:
+   
+   1. Feature-Based (freeze_layers=True):
+      - Freeze encoder, only train classification head
+      - Fast, works well with small target datasets
+      - Typical when target domain similar to pretraining
+   
+   2. Fine-Tuning (freeze_layers=False):
+      - Train entire model end-to-end
+      - Use layer-wise learning rate decay:
+        * Classification head: full learning rate
+        * Later encoder layers: moderate LR
+        * Early encoder layers: small LR
+      - Better performance but requires more data
+
+METRICS TRACKED:
+   
+   Label-based (computed from predicted labels):
+   - Accuracy (macro-averaged)
+   - Precision, Recall, F1 Score
+   - Cohen's Kappa (inter-rater agreement)
+   
+   Logit-based (computed from probabilities):
+   - AUROC (Area Under ROC Curve)
+   - AUPR (Average Precision / Area Under PR Curve)
+   
+   All tracked for train/val/test splits separately.
+
+RELATED FILES:
+   - models/LUNA.py: Model with classification head
+   - data_module/finetune_data_module.py: Labeled data loading
+   - data_module/subject_independent_data_module.py: Cross-subject evaluation
+   - config/experiment/LUNA_finetune.yaml: Finetuning config
+   - schedulers/cosine.py: Learning rate schedule
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

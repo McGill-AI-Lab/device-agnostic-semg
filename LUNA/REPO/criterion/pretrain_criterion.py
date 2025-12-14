@@ -1,3 +1,48 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         PRETRAIN_CRITERION.PY - RECONSTRUCTION LOSS          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Loss function for masked autoencoder pretraining. Computes reconstruction error
+   separately for masked and unmasked regions of the input signal.
+
+HIGH-LEVEL OVERVIEW:
+   During pretraining, LUNA masks patches of EEG signals and learns to reconstruct them.
+   This criterion measures how well the model reconstructs both the masked regions
+   (the primary learning signal) and unmasked regions (for consistency).
+
+KEY CLASSES:
+   
+   PretrainCriterion(nn.Module):
+   - Configurable loss function (L1, L2, or Smooth L1)
+   - Computes separate losses for masked vs unmasked patches
+   - Returns (masked_loss, unmasked_loss) tuple
+   
+   Supported loss types:
+   - 'l1': Mean Absolute Error (L1 loss)
+   - 'l2': Mean Squared Error (L2 loss)  
+   - 'smooth_l1': Smooth L1 / Huber loss (robust to outliers)
+
+TECHNICAL DETAILS:
+   The forward pass takes:
+   - reconstructed: Model's output signal [B, C, T]
+   - original: Ground truth signal [B, C, T]
+   - mask: Boolean mask [B, C, T] where True = masked
+   
+   Returns:
+   - masked_loss: Error only on masked regions
+   - unmasked_loss: Error only on non-masked regions
+
+USAGE IN TRAINING:
+   Typically combined as: total_loss = masked_loss + λ * unmasked_loss
+   where λ is a small coefficient (e.g., 0.1) to emphasize masked reconstruction.
+
+RELATED FILES:
+   - tasks/pretrain_task.py: Uses this criterion for pretraining
+   - tasks/pretrain_task_LUNA.py: LUNA-specific pretraining implementation
+   - criterion/query_specialization_criterion.py: Additional auxiliary loss
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

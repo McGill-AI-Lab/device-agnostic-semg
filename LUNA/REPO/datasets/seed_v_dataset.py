@@ -1,3 +1,51 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              SEED_V_DATASET.PY - EMOTION RECOGNITION DATASET                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Custom wrapper for the SEED-V emotion recognition dataset, extending torcheeg's
+   SEEDVDataset with channel location embeddings and subject-independent split support.
+
+HIGH-LEVEL OVERVIEW:
+   SEED-V is a popular EEG emotion recognition dataset with 5 emotion categories.
+   This wrapper:
+   1. Loads SEED-V data using torcheeg library
+   2. Adds 3D channel location coordinates for each electrode
+   3. Supports subject-independent train/val/test splits
+   4. Returns dict with 'input', 'label', and 'channel_locations'
+
+KEY CLASSES:
+   
+   CustomSEEDDataset(SEEDVDataset):
+   - Extends torcheeg's SEEDVDataset
+   - Automatically computes channel locations from SEED_CHANNEL_LIST
+   - Caches preprocessed data to io_path for fast reloading
+   - Configurable train/val/test split sizes
+
+KEY FEATURES:
+   - Channel locations: 3D (x, y, z) coordinates for each EEG electrode
+   - Subject splits: train_size/val_size/test_size define subject boundaries
+   - Automatic preprocessing: Chunks 200-sample windows
+   - Label selection: Extracts 'emotion' from metadata
+   - Integration: Works with SubjectIndependentDataModule
+
+SEED-V DATASET DETAILS:
+   - Electrodes: 62 channels (SEED_CHANNEL_LIST)
+   - Emotions: 5 classes (happy, sad, disgust, fear, neutral)
+   - Subjects: 15 subjects with multiple trials each
+   - Sampling rate: Varies (handled by torcheeg)
+   
+   Typical split configuration:
+   - train_size=5: First 5 subjects for training
+   - val_size=5: Next 5 subjects for validation
+   - test_size=5: Last 5 subjects for testing
+
+RELATED FILES:
+   - data_module/subject_independent_data_module.py: Uses this dataset
+   - models/modules/channel_embeddings.py: Processes channel locations
+   - tasks/finetune_task_LUNA.py: Training task for this dataset
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

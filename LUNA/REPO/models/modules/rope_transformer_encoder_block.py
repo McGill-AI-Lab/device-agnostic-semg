@@ -1,3 +1,79 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║         ROPE_TRANSFORMER_ENCODER_BLOCK.PY - TEMPORAL MODELING                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+    
+PURPOSE:
+   Transformer encoder block with Rotary Position Embeddings (RoPE) for temporal
+   sequence modeling. Core component of LUNA's temporal processing pipeline.
+
+HIGH-LEVEL OVERVIEW:
+   After channel unification via cross-attention, LUNA needs to model temporal
+   dependencies across time patches. This module implements:
+   1. Self-attention with RoPE (better than absolute position encoding)
+   2. Feed-forward network for feature transformation
+   3. Pre-normalization for training stability
+   4. Residual connections and dropout for regularization
+
+KEY CLASSES:
+   
+   1. RotarySelfAttentionBlock:
+      - Multi-head self-attention with RoPE
+      - Applies rotary embeddings to queries and keys
+      - Benefits: Better length extrapolation, relative position encoding
+   
+   2. FeedForwardBlock:
+      - Two-layer MLP with GELU activation
+      - LayerNorm between layers for stability
+      - Dropout for regularization
+   
+   3. RotaryTransformerBlock:
+      - Complete encoder block: Attention → FFN
+      - Pre-norm architecture (norm before attention/FFN)
+      - DropPath for stochastic depth (training efficiency)
+
+ROTARY POSITION EMBEDDINGS (RoPE):
+   
+   Why RoPE instead of absolute position encoding?
+   ✓ Encodes relative positions naturally (attention sees distance between tokens)
+   ✓ Better extrapolation to longer sequences than seen during training
+   ✓ No learned position embeddings needed (reduces parameters)
+   ✓ Works by rotating Q and K vectors in complex space
+   
+   Implementation:
+   - Applies learned frequency-based rotations to each attention head
+   - Rotation amount depends on token position
+   - Result: attention weights naturally encode relative distances
+
+ARCHITECTURE DETAILS:
+   
+   Input: [B, num_patches, embed_dim]
+   
+   Block Structure:
+   x = x + DropPath(Attention(LayerNorm(x)))
+   x = x + DropPath(FFN(LayerNorm(x)))
+   
+   Output: [B, num_patches, embed_dim]
+   
+   - Pre-norm: Normalizes before each sub-layer (more stable than post-norm)
+   - Residual connections: Enables gradient flow in deep networks
+   - DropPath: Randomly drops entire residual paths during training
+
+WHY THIS MATTERS FOR EEG:
+   EEG signals have rich temporal dynamics:
+   - Brain states evolve over seconds
+   - Transient events (e.g., epileptic spikes) have specific temporal patterns
+   - Long-range dependencies matter (e.g., sleep spindles lasting 0.5-2s)
+   
+   RoPE-based transformers excel at:
+   ✓ Capturing dependencies at multiple timescales
+   ✓ Attending to relevant past context
+   ✓ Generalizing to different sequence lengths
+
+RELATED FILES:
+   - models/LUNA.py: Stacks multiple RotaryTransformerBlocks
+   - External: rotary_embedding_torch library (RoPE implementation)
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

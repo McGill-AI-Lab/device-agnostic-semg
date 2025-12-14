@@ -1,3 +1,106 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║            LUNA.PY - TOPOLOGY-AGNOSTIC EEG FOUNDATION MODEL                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   LUNA (Linear-in-channels, Unified, Network-Agnostic) architecture for EEG analysis.
+   A transformer-based foundation model that works with arbitrary EEG channel configurations
+   through query-based channel unification.
+
+HIGH-LEVEL OVERVIEW - WHY LUNA IS SPECIAL:
+   Traditional EEG models require fixed channel layouts. LUNA works with ANY montage by:
+   1. Using learnable queries to unify channels BEFORE temporal modeling
+   2. Achieving linear (not quadratic) complexity in channel count
+   3. Leveraging cross-attention to create topology-agnostic representations
+   4. Supporting both pretraining (reconstruction) and finetuning (classification)
+
+ARCHITECTURE BREAKDOWN:
+   
+   Input Pipeline:
+   ├─► PatchEmbedNetwork: Conv-based patch embedding (C×T → patches)
+   ├─► FrequencyFeatureEmbedder: Adds frequency-domain features
+   ├─► Channel Location Embedder: Embeds 3D electrode positions
+   └─► Masking: Optional patch masking for pretraining
+   
+   Core Processing:
+   ├─► CrossAttentionBlock: Q learnable queries attend to C channels
+   │   Result: [B×patches, Q, D] (channels unified!)
+   ├─► Reshape: [B, patches, Q×D] (ready for temporal modeling)
+   └─► RotaryTransformerBlocks: Temporal transformer with RoPE
+   
+   Output Heads:
+   ├─► Pretraining: PatchReconstructionHeadWithQueries
+   └─► Finetuning: ClassificationHeadWithQueries
+
+KEY INNOVATION - CROSS-ATTENTION FOR CHANNEL UNIFICATION:
+   Instead of modeling all C×T interactions (quadratic in C):
+   - Q queries (e.g., 4) attend to C channels at each time patch
+   - Complexity: O(Q×C) per patch (linear in C!)
+   - Each query learns to extract different channel patterns
+   - Queries are shared across all time patches
+   
+   This makes LUNA:
+   ✓ Scalable to many channels
+   ✓ Topology-agnostic (works with any electrode layout)
+   ✓ Efficient (no full channel×channel attention)
+
+KEY CLASSES & MODULES:
+   
+   1. PatchEmbedNetwork:
+      - Splits signal into patches along time dimension
+      - Uses strided convolutions with GroupNorm + GELU
+      - Output: [B, C×S, D] where S = num_patches
+   
+   2. CrossAttentionBlock:
+      - Q learnable queries (nn.Parameter)
+      - Multi-head cross-attention: queries attend to channels
+      - Self-attention among queries for refinement
+      - Returns unified features + attention scores
+   
+   3. RotaryTransformerBlock:
+      - Temporal modeling with Rotary Position Embeddings (RoPE)
+      - Feed-forward with GELU activation
+      - Pre-norm architecture for training stability
+   
+   4. PatchReconstructionHeadWithQueries:
+      - Decoder for masked autoencoder pretraining
+      - Uses channel embeddings + location embeddings
+      - Reconstructs original signal patches
+   
+   5. ClassificationHeadWithQueries:
+      - Learned aggregation token
+      - Cross-attention pooling over sequence
+      - MLP head for classification
+
+THEORETICAL BACKGROUND:
+   LUNA combines ideas from:
+   - Perceiver (cross-attention for compression)
+   - MAE (masked autoencoder pretraining)
+   - RoPE (rotary position embeddings)
+   - ViT (patch-based processing)
+   
+   Novel contribution: Query-based channel unification for topology-agnostic EEG modeling
+
+USAGE MODES:
+   
+   Pretraining (num_classes=0):
+   - Input: x_signal [B, C, T], mask, channel_locations
+   - Output: reconstructed signal [B, C, T]
+   - Loss: Reconstruction error on masked patches
+   
+   Finetuning (num_classes>0):
+   - Input: x_signal [B, C, T], mask (unused), channel_locations
+   - Output: class logits [B, num_classes]
+   - Loss: Cross-entropy for classification
+
+RELATED FILES:
+   - models/modules/rope_transformer_encoder_block.py: Temporal modeling
+   - models/modules/frequency_embedder.py: Frequency features
+   - models/modules/channel_embeddings.py: Channel indexing
+   - tasks/pretrain_task_LUNA.py: Pretraining logic
+   - tasks/finetune_task_LUNA.py: Finetuning logic
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

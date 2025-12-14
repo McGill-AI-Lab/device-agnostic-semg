@@ -1,3 +1,52 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                 QUERY_SPECIALIZATION_CRITERION.PY - AUXILIARY LOSS           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Auxiliary loss to encourage query specialization in LUNA's cross-attention mechanism.
+   Promotes diversity by penalizing similarity between different query embeddings.
+
+HIGH-LEVEL OVERVIEW:
+   LUNA uses learnable queries in cross-attention to unify multi-channel EEG signals.
+   This loss encourages each query to attend to different aspects of the input channels,
+   preventing collapse where all queries learn the same representation.
+
+KEY CLASSES:
+   
+   QuerySpecializationCriterion(nn.Module):
+   - Computes pairwise similarity between query attention patterns
+   - Penalizes off-diagonal elements (high similarity between different queries)
+   - Encourages orthogonal/independent query specialization
+   
+   Parameters:
+   - loss_type: 'l1', 'l2', or 'smooth_l1'
+   - loss_coeff: Scaling factor for the loss (typically 0.1-1.0)
+
+TECHNICAL DETAILS:
+   Forward pass:
+   1. Takes attention_scores [B, Q, C] where:
+      - B = batch size
+      - Q = number of queries (e.g., 4)
+      - C = number of channels
+   
+   2. Computes query similarity matrix [B, Q, Q]:
+      similarity = attention_scores @ attention_scores^T
+   
+   3. Masks diagonal (self-similarity) and penalizes off-diagonal:
+      loss = mean(off_diagonal_elements)
+   
+   Goal: Minimize similarity between different queries → each query specializes
+
+WHY THIS MATTERS:
+   Without this loss, all queries might attend to the same channel patterns,
+   reducing model capacity. With it, queries learn complementary representations,
+   enabling richer unified embeddings.
+
+RELATED FILES:
+   - models/LUNA.py: CrossAttentionBlock produces attention_scores
+   - tasks/pretrain_task_LUNA.py: Combines this with reconstruction loss
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

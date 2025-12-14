@@ -1,3 +1,49 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                   FINETUNE_DATA_MODULE.PY - SUPERVISED LEARNING              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   PyTorch Lightning DataModule for supervised fine-tuning with pre-split train/val/test sets.
+   Used for classification tasks where datasets are already partitioned.
+
+HIGH-LEVEL OVERVIEW:
+   Simple data module that wraps pre-defined train, validation, and test datasets.
+   Provides DataLoaders with appropriate settings for supervised learning:
+   - Shuffling for train (improves generalization)
+   - No shuffling for val/test (reproducible evaluation)
+   - Consistent batch sizes and worker processes
+
+KEY CLASSES:
+   
+   FinetuneDataModule(pl.LightningDataModule):
+   - Manages train, val, test, and predict dataloaders
+   - Configurable batch size and num_workers
+   - Compatible with any PyTorch Dataset
+   - Integrates seamlessly with PyTorch Lightning Trainer
+
+KEY METHODS:
+   - setup(stage): Assigns datasets based on training stage
+   - train_dataloader(): Returns shuffled training loader
+   - val_dataloader(): Returns non-shuffled validation loader  
+   - test_dataloader(): Returns non-shuffled test loader
+   - predict_dataloader(): Uses val dataset for inference
+
+TYPICAL USAGE:
+   Used for:
+   - TUH downstream tasks (TUAB, TUAR, TUSL) with fixed splits
+   - Any classification task with predefined train/val/test partitions
+   
+   Not used for:
+   - Pretraining (see PretrainDataModule)
+   - Subject-independent splits (see SubjectIndependentDataModule)
+   - Multi-dataset training (see VaryingChannelsDataModule)
+
+RELATED FILES:
+   - datasets/hdf5_dataset.py: HDF5 dataset implementation
+   - tasks/finetune_task.py: Training task that uses this module
+   - config/data_module/finetune_data_module.yaml: Configuration
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

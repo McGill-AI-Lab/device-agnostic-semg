@@ -1,3 +1,64 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              COSINE.PY - COSINE ANNEALING LR SCHEDULER                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Wrapper for cosine learning rate scheduler with warmup, adapted for PyTorch Lightning.
+   Smoothly decays learning rate from initial to minimum value over training.
+
+HIGH-LEVEL OVERVIEW:
+   Cosine annealing provides smooth LR decay that often outperforms step decay:
+   1. Warmup phase: Linear increase from warmup_lr_init to base_lr
+   2. Cosine decay: Smooth decrease following cosine curve to min_lr
+   3. Step-based: Updates every optimization step (not epoch)
+
+KEY CLASS:
+   
+   CosineLRSchedulerWrapper:
+   - Extends timm's CosineLRScheduler
+   - Automatically calculates steps from epochs and batch info
+   - Integrates with PyTorch Lightning Trainer
+   
+   Parameters:
+   - warmup_epochs: Number of epochs for linear warmup
+   - min_lr: Minimum learning rate at end of training
+   - warmup_lr_init: Starting LR during warmup
+   - t_in_epochs: Whether to interpret time in epochs (False = steps)
+
+WHY COSINE ANNEALING?
+   
+   Advantages over step decay:
+   ✓ Smooth convergence (no sudden drops)
+   ✓ Often reaches better minima
+   ✓ Less sensitive to milestone timing
+   ✓ Works well with modern optimizers (AdamW)
+   
+   Warmup benefits:
+   ✓ Stabilizes training in early stages
+   ✓ Prevents early overfitting
+   ✓ Common practice for transformers
+
+LR SCHEDULE VISUALIZATION:
+   
+   warmup_lr_init ─────────╱  ← Linear warmup
+                          ╱
+   base_lr ──────────────╱─╲
+                           ╲
+                            ╲  ← Cosine decay
+                             ╲___
+   min_lr ─────────────────────────
+
+   Typical values:
+   - base_lr: 1e-3 to 5e-4
+   - min_lr: 1e-6 to 1e-5
+   - warmup_lr_init: 1e-6
+   - warmup_epochs: 5-10
+
+RELATED FILES:
+   - tasks/*: Configure this scheduler in configure_optimizers()
+   - schedulers/multi_step_lr.py: Alternative step-based scheduler
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

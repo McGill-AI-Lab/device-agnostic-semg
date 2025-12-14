@@ -1,3 +1,57 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                 HDF5_DATASET.PY - EFFICIENT EEG DATA LOADING                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   PyTorch Dataset for loading EEG data from HDF5 files with intelligent caching
+   for fast I/O. Supports both pretraining (no labels) and finetuning (with labels).
+
+HIGH-LEVEL OVERVIEW:
+   HDF5 format enables efficient storage and random access for large EEG datasets.
+   This loader:
+   1. Opens HDF5 file with hierarchical group structure
+   2. Builds index mapping for O(1) sample access
+   3. Implements LRU-style cache to reduce disk reads
+   4. Returns either (X) for pretraining or (X, y) for finetuning
+
+KEY CLASSES:
+   
+   HDF5Loader(torch.utils.data.Dataset):
+   - Opens HDF5 file and maintains connection
+   - Maps flat indices to (group_key, sample_idx) pairs
+   - Caches recently accessed samples in memory
+   - Converts to PyTorch tensors on-the-fly
+
+KEY FEATURES:
+   - Caching: Stores up to cache_size samples (default 1500) in memory
+   - Lazy loading: Only loads samples when accessed
+   - Group-based storage: Samples organized into groups for efficiency
+   - Flexible modes:
+     * finetune=True: Returns (X, y) for supervised learning
+     * finetune=False: Returns X for self-supervised learning
+   - Optional squeeze: Adds channel dimension if needed
+
+HDF5 FILE STRUCTURE:
+   file.h5
+   ├── data_group_0/
+   │   ├── X: [N, C, T] EEG signals
+   │   └── y: [N] labels (optional)
+   ├── data_group_1/
+   │   ├── X: [N, C, T]
+   │   └── y: [N]
+   └── ...
+   
+   Where:
+   - N = samples per group (typically 1000)
+   - C = number of EEG channels
+   - T = time samples (e.g., 5120 for 20s at 256Hz)
+
+RELATED FILES:
+   - make_datasets/make_hdf5.py: Creates HDF5 files from pickles
+   - data_module/*: Use this dataset in their dataloaders
+   - datasets/seed_v_dataset.py: Alternative dataset for SEED-V
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

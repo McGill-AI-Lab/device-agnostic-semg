@@ -1,3 +1,56 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║           MULTILOADER_DATA_MODULE.PY - VARYING CHANNEL COUNTS                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   DataModule for training with datasets that have different numbers of EEG channels.
+   Groups datasets by channel count and creates sequential loaders for each group.
+
+HIGH-LEVEL OVERVIEW:
+   Different EEG datasets use different electrode montages (e.g., 22-channel, 30-channel).
+   This module:
+   1. Groups datasets by number of channels
+   2. Creates separate dataloaders for each channel-count group
+   3. Sequentially iterates through groups during training
+   4. Supports distributed training with DistributedSampler
+   
+   This is useful for testing topology-agnostic models like LUNA across varied montages.
+
+KEY CLASSES:
+   
+   SequentialLoader:
+   - Wrapper that chains multiple dataloaders
+   - Iterates through loaders sequentially
+   - Returns batches from first loader, then second, etc.
+   
+   VaryingChannelsDataModule(pl.LightningDataModule):
+   - Groups datasets by num_channels attribute
+   - Optionally subsamples each dataset (subset_ratio)
+   - Splits each group into train/val
+   - Creates distributed samplers for DDP training
+
+KEY FEATURES:
+   - subset_ratio: Use only a fraction of each dataset (e.g., 0.2 = 20%)
+   - Automatic channel grouping: Datasets with same #channels are concatenated
+   - DistributedSampler: Supports multi-GPU training
+   - Sequential batching: Model sees one channel-count at a time
+
+TYPICAL USAGE:
+   Used for:
+   - Multi-dataset pretraining with varied montages
+   - Testing model's ability to generalize across topologies
+   - Experiments comparing different channel configurations
+   
+   Example:
+   - TUEG (22 channels) + Siena (30 channels)
+   - Creates 2 groups: [TUEG loader] → [Siena loader]
+   - Training alternates between channel counts
+
+RELATED FILES:
+   - data_module/pretrain_data_module.py: Simpler alternative for uniform channels
+   - datasets/hdf5_dataset.py: Must expose num_channels attribute
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

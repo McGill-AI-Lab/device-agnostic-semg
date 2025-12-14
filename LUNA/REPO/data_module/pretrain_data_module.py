@@ -1,3 +1,51 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              PRETRAIN_DATA_MODULE.PY - SELF-SUPERVISED PRETRAINING           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   PyTorch Lightning DataModule for multi-dataset pretraining. Combines multiple datasets,
+   splits them into train/val, and provides dataloaders for self-supervised learning.
+
+HIGH-LEVEL OVERVIEW:
+   For pretraining LUNA on large-scale EEG data (e.g., TUEG + Siena), this module:
+   1. Takes multiple unlabeled EEG datasets as input
+   2. Splits each dataset into train/val according to a ratio (default 80/20)
+   3. Concatenates all training splits into one unified training set
+   4. Concatenates all validation splits into one unified validation set
+   5. Provides dataloaders for masked autoencoder training
+
+KEY CLASSES:
+   
+   PretrainDataModule(pl.LightningDataModule):
+   - Accepts a dictionary of datasets
+   - Automatically splits each dataset
+   - Concatenates splits using ConcatDataset
+   - Returns shuffled dataloaders for both train and val
+
+KEY FEATURES:
+   - train_val_split_ratio: Configurable split ratio (default 0.8)
+   - Filters out None datasets automatically
+   - Drops last incomplete batch (for stable training)
+   - Supports multiple concurrent datasets from different sources
+
+TYPICAL WORKFLOW:
+   1. Load multiple HDF5 datasets (e.g., TUEG, Siena)
+   2. Each dataset is split into 80% train, 20% val
+   3. All training data is concatenated
+   4. All validation data is concatenated
+   5. Train with masked reconstruction objective
+   
+   Example sizes after concatenation:
+   - TUEG: 50k samples → 40k train, 10k val
+   - Siena: 30k samples → 24k train, 6k val
+   - Combined: 64k train, 16k val
+
+RELATED FILES:
+   - tasks/pretrain_task_LUNA.py: Uses this module for pretraining
+   - datasets/hdf5_dataset.py: Individual dataset implementation
+   - config/data_module/pretrain_data_module.yaml: Configuration
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

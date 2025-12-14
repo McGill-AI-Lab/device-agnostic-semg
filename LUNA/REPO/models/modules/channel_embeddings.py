@@ -1,3 +1,70 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║         CHANNEL_EMBEDDINGS.PY - EEG CHANNEL NAMING & LOCATIONS               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Central registry for EEG channel names across datasets, with utilities to map
+   channel names to indices and retrieve 3D spatial coordinates for electrodes.
+
+HIGH-LEVEL OVERVIEW:
+   Different EEG datasets use different channel naming conventions (e.g., "FP1" vs "FP1-F7").
+   This module:
+   1. Defines channel lists for SEED, TUEG (bipolar), and Siena datasets
+   2. Creates a unified mapping: channel_name → integer index
+   3. Provides functions to get 3D (x, y, z) electrode locations
+   4. Implements learnable channel embeddings for pretraining
+
+KEY COMPONENTS:
+   
+   Channel Lists:
+   - SEED_CHANNEL_LIST: 62 channels (monopolar, e.g., "FP1", "FP2")
+   - TUEG_CHANNEL_LIST: 22 channels (bipolar, e.g., "FP1-F7", "T3-T5")
+   - SIENA_CHANNEL_LIST: 30 channels (monopolar)
+   
+   Global Mappings:
+   - CHANNEL_NAMES_TO_IDX: Unified dict mapping all channel names to indices
+   - CHANNEL_IDX_TO_NAMES: Reverse mapping from indices to names
+
+KEY FUNCTIONS:
+   
+   get_channel_indices(channel_names):
+   - Input: List of channel name strings
+   - Output: List of integer indices
+   - Use: Convert dataset channels to model's internal indexing
+   
+   get_channel_locations(channel_names):
+   - Input: List of channel names (monopolar or bipolar)
+   - Output: List of (x, y, z) 3D coordinates
+   - Uses MNE's standard_1005 montage for positions
+   - For bipolar channels: averages positions of two electrodes
+   
+   ChannelEmbeddings(nn.Module):
+   - Learnable embedding layer for channel identity
+   - Used during pretraining to encode "which channel"
+   - Input: channel indices (integers)
+   - Output: embedding vectors [num_channels, embed_dim]
+
+BIPOLAR MONTAGE HANDLING:
+   Bipolar channels like "FP1-F7" represent the difference between two electrodes.
+   For spatial location:
+   - Parse "FP1-F7" → ["FP1", "F7"]
+   - Get locations for FP1 and F7 from MNE montage
+   - Average: location = (loc_FP1 + loc_F7) / 2
+   
+   This provides an approximate spatial position for bipolar derivations.
+
+WHY CHANNEL LOCATIONS MATTER:
+   - LUNA uses 3D positions as positional encodings
+   - Helps model understand spatial relationships between electrodes
+   - Enables topology-agnostic learning (model sees positions, not names)
+   - Critical for generalizing across different montages
+
+RELATED FILES:
+   - models/LUNA.py: Uses channel locations in prepare_tokens()
+   - datasets/seed_v_dataset.py: Computes channel locations for SEED-V
+   - models/modules/channel_location_embedder.py: Processes locations into embeddings
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

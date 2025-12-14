@@ -1,3 +1,72 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                             RUN_TRAIN.PY - MAIN TRAINING SCRIPT              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Main entry point for training and evaluating models.
+   Orchestrates the entire training pipeline using Hydra configuration and PyTorch Lightning.
+
+HIGH-LEVEL OVERVIEW:
+   This is the script you run to train or finetune LUNA models. It:
+   - Loads configurations from config/ using Hydra
+   - Sets up data modules, models, and training tasks
+   - Initializes PyTorch Lightning Trainer with callbacks
+   - Supports pretraining and finetuning workflows
+   - Handles checkpoint loading (both .ckpt and .safetensors)
+   - Manages distributed training (DDP)
+
+CODE STRUCTURE:
+   - train(cfg): Main training function that orchestrates the entire pipeline
+   - run(cfg): Hydra entry point that wraps train()
+   - Environment setup for DATA_PATH and CHECKPOINT_DIR
+
+KEY COMPONENTS:
+   1. Configuration Management:
+      - Uses Hydra for hierarchical configuration
+      - Resolves env variables and custom resolvers
+      - Merges experiment configs with defaults
+   
+   2. Data Loading:
+      - Instantiates data_module from config (e.g., FinetuneDataModule, PretrainDataModule)
+   
+   3. Model & Task Setup:
+      - Instantiates task (PretrainTask/FinetuneTask) which wraps the model
+      - Loads pretrained weights if provided (safetensors or checkpoint)
+   
+   4. Training Infrastructure:
+      - ModelCheckpoint callback for saving best/last checkpoints
+      - TensorBoard logging for metrics and visualizations
+      - Support for resuming from last checkpoint
+      - DDP strategy for multi-GPU training
+   
+   5. Training Modes:
+      - cfg.training=True: Run training
+      - cfg.final_validate=True: Run validation after training
+      - cfg.final_test=True: Run testing after training
+
+USAGE EXAMPLES:
+   # Pretrain LUNA base model
+   python run_train.py +experiment=LUNA_pretrain /model=LUNA_base
+   
+   # Finetune with pretrained weights
+   python run_train.py +experiment=LUNA_finetune /model=LUNA_base \
+       pretrained_safetensors_path=/path/to/LUNA_base.safetensors
+   
+   # Resume from checkpoint
+   python run_train.py +experiment=LUNA_finetune resume=True
+
+REQUIRED ENVIRONMENT VARIABLES:
+   - DATA_PATH: Root directory for datasets (currently set to #CHANGEME)
+   - CHECKPOINT_DIR: Directory for saving checkpoints (currently set to #CHANGEME)
+
+RELATED FILES:
+   - config/defaults.yaml: Base configuration
+   - config/experiment/: Experiment-specific configs
+   - tasks/: Training task implementations
+   - data_module/: Data loading logic
+   - models/: Model architectures
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

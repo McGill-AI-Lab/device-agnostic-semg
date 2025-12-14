@@ -1,3 +1,96 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          PRETRAIN_TASK_LUNA.PY - MASKED AUTOENCODER PRETRAINING              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   PyTorch Lightning task for self-supervised pretraining of LUNA using masked
+   autoencoder (MAE) objective with optional query specialization loss.
+
+HIGH-LEVEL OVERVIEW:
+   LUNA is pretrained on large-scale unlabeled EEG data (TUEG + Siena, 21k+ hours).
+   The pretraining process:
+   1. Randomly mask patches of EEG signal (e.g., 50% masking ratio)
+   2. Model reconstructs the masked patches
+   3. Learn representations that capture EEG signal structure
+   4. Optionally enforce query specialization (diverse attention patterns)
+
+KEY CLASS:
+   
+   MaskTask(pl.LightningModule):
+   - Wraps LUNA model (num_classes=0 for reconstruction mode)
+   - Generates random patch masks
+   - Computes reconstruction loss + query specialization loss
+   - Logs training metrics and visualizations to TensorBoard
+   - Configures optimizers and learning rate schedulers
+
+KEY METHODS:
+   
+   1. generate_mask(batch_size, C, T):
+      - Creates block-wise rectangular masks
+      - Masking happens at patch level (not individual samples)
+      - masking_ratio controls what fraction of patches to mask
+      - Returns boolean mask [B, C, T]
+   
+   2. training_step(batch, batch_idx):
+      - Normalize input (optional)
+      - Generate random mask
+      - Forward pass: model reconstructs signal
+      - Compute losses:
+        a) Masked reconstruction loss (primary)
+        b) Unmasked reconstruction loss (consistency)
+        c) Query specialization loss (diversity)
+      - Total loss = masked + λ₁*unmasked + λ₂*query_spec
+   
+   3. validation_step(batch, batch_idx):
+      - Same as training but logs visualizations
+      - Plots original vs reconstructed signals
+      - Highlights masked regions with gray bands
+
+LOSS COMPONENTS:
+   
+   1. Masked Reconstruction Loss:
+      - Measures error only on masked patches
+      - Primary learning signal (teaches model to inpaint)
+      - Typical loss: L1, L2, or Smooth L1
+   
+   2. Unmasked Reconstruction Loss (weighted by λ₁ ~ 0.1):
+      - Measures error on visible patches
+      - Encourages consistency (model shouldn't distort visible data)
+   
+   3. Query Specialization Loss (optional, weighted by λ₂):
+      - Penalizes similarity between different query attention patterns
+      - Encourages each query to focus on different channel aspects
+      - See criterion/query_specialization_criterion.py
+
+WHY MASKED AUTOENCODER PRETRAINING WORKS:
+   
+   Inspired by BERT (NLP) and MAE (Vision), masking forces the model to:
+   ✓ Learn rich representations of signal structure
+   ✓ Understand temporal dependencies (past predicts future)
+   ✓ Capture statistical properties of EEG
+   ✓ Build features useful for downstream tasks
+   
+   After pretraining, the encoder can be:
+   - Fine-tuned for classification (TUAB, TUAR, TUSL)
+   - Used as feature extractor
+   - Transferred to new datasets/montages
+
+TYPICAL HYPERPARAMETERS:
+   - Masking ratio: 0.3-0.7 (50% is common)
+   - Patch size: (C_subset, 40) for temporal patches
+   - Optimizer: AdamW with cosine LR schedule
+   - Warmup: 5-10 epochs
+   - Total epochs: 100-300 depending on dataset size
+   - Normalization: Channel-wise z-score
+
+RELATED FILES:
+   - models/LUNA.py: Model with reconstruction head
+   - criterion/pretrain_criterion.py: Reconstruction loss
+   - criterion/query_specialization_criterion.py: Auxiliary loss
+   - data_module/pretrain_data_module.py: Multi-dataset loading
+   - config/experiment/LUNA_pretrain.yaml: Full config
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

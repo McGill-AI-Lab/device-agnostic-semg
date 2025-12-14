@@ -1,3 +1,112 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║         PROCESS_RAW_EEG.PY - EDF TO PICKLE PREPROCESSING PIPELINE            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Converts raw EEG data in EDF format from TUH datasets (TUAB, TUAR, TUSL) into
+   preprocessed pickle files with windowed segments, labels, and bipolar montage.
+
+HIGH-LEVEL OVERVIEW:
+   TUH datasets provide raw continuous EEG recordings in EDF format with separate
+   annotation files. This script:
+   1. Reads EDF files and loads EEG channels
+   2. Converts from referential to TCP bipolar montage
+   3. Resamples to standard sampling rate (256 Hz)
+   4. Splits into fixed-length windows (e.g., 20s)
+   5. Extracts labels from CSV annotations
+   6. Saves as pickle files for efficient loading
+
+KEY COMPONENTS:
+   
+   Channel Configuration:
+   - CH_ORDER_STANDARD: 21 standard referential channels (e.g., "EEG FP1-REF")
+   - TCP_BIPOLAR_MONTAGE: 22 bipolar channel pairs (e.g., "FP1-F7", "T3-T5")
+   
+   Label Maps:
+   - TUSL_LABEL_MAP: Background (1), Seizure (2), Slow wave (3)
+   - MULTILABEL_MAP: Artifact types (chew, elec, eyem, musc, shiv)
+   - TUAR_ARTIFACT_LABELS_BINARY: All artifact types for binary classification
+
+KEY FUNCTIONS:
+   
+   1. make_bipolar(raw):
+      - Converts referential EEG to bipolar montage
+      - Bipolar channel = electrode1 - electrode2
+      - Reduces common reference noise
+   
+   2. apply_csv_annotations(mode, df_art, label_array, ...):
+      - Parses CSV annotation files
+      - Maps artifact labels to integer codes
+      - Supports Binary, MultiBinary, MultiLabel modes
+   
+   3. process_and_dump_file(params):
+      - Worker function for parallel processing
+      - Reads single EDF file
+      - Applies windowing and labeling
+      - Saves segments as pickle files
+
+PROCESSING MODES:
+   
+   TUAB (Abnormal/Normal Classification):
+   - Binary labels from filename or CSV
+   - Window size: 20s (5120 samples @ 256 Hz)
+   - Output: (signal, binary_label) pairs
+   
+   TUAR (Artifact Detection):
+   - Multi-label: Which artifact types are present
+   - Channel-level annotations
+   - Output: (signal, multi_label_array) pairs
+   
+   TUSL (Seizure Detection):
+   - Background, slow wave, or seizure labels
+   - Temporal annotations
+   - Output: (signal, seizure_type) pairs
+
+WHY BIPOLAR MONTAGE?
+   Referential montage measures each electrode vs a common reference (e.g., mastoid).
+   Issues:
+   - Common reference noise affects all channels
+   - Reference electrode artifacts propagate
+   
+   Bipolar montage measures differences between adjacent electrodes:
+   - Reduces common noise (subtracted out)
+   - Highlights local activity
+   - Standard for clinical EEG analysis
+   
+   TCP (Temporal, Central, Parietal) montage:
+   - Widely used clinical standard
+   - Chains of electrodes across brain regions
+   - Example: FP1→F7→T3→T5→O1 (left temporal chain)
+
+WORKFLOW:
+   1. Collect EDF file paths from directory structure
+   2. For each EDF:
+      a) Load raw data with MNE
+      b) Select standard channels
+      c) Convert to bipolar montage
+      d) Resample to 256 Hz
+      e) Apply bandpass filter (0.5-50 Hz)
+      f) Split into windows
+      g) Load and apply annotations
+      h) Save windows as pickles
+   3. Multiprocessing for speed (CPU cores)
+
+USAGE:
+   ```bash
+   # TUAB
+   python process_raw_eeg.py tuab --root_dir /data/TUAB/edf --output_dir /processed_eeg
+   
+   # TUSL
+   python process_raw_eeg.py tusl --root_dir /data/TUSL/edf --output_dir /processed_eeg
+   
+   # TUAR
+   python process_raw_eeg.py tuar --root_dir /data/TUAR/edf --output_dir /processed_eeg
+   ```
+
+NEXT STEP:
+   After running this script, use make_hdf5.py to bundle pickles into HDF5 files.
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *

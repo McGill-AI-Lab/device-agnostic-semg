@@ -1,3 +1,88 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║            MULTI_STEP_LR.PY - STEP DECAY LR SCHEDULER WITH WARMUP            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+PURPOSE:
+   Learning rate scheduler that decays LR at specific milestone epochs, with optional
+   linear warmup phase. Extension of PyTorch's MultiStepLR.
+
+HIGH-LEVEL OVERVIEW:
+   Step decay strategy:
+   1. Optional warmup: Linear increase from warmup_init_lr to base_lr
+   2. Plateau phases: Constant LR until reaching a milestone
+   3. Decay steps: Multiply LR by gamma at each milestone
+   4. Repeat until training ends
+
+KEY CLASSES:
+   
+   1. MultiStepLRWarmup:
+      - Extends PyTorch's MultiStepLR
+      - Adds linear warmup capability
+      - Configurable decay schedule via milestones
+   
+   2. multi_step_lr (convenience function):
+      - Factory function for easy instantiation
+      - Parses milestone strings (e.g., "30+60+90")
+
+CONFIGURATION:
+   
+   Parameters:
+   - milestones: List of epochs at which to decay LR (e.g., [30, 60, 90])
+   - gamma: Multiplicative factor (e.g., 0.1 = reduce to 10%)
+   - warmup_iter: Number of warmup iterations (-1 = no warmup)
+   - warmup_init_lr: Starting LR for warmup phase
+   
+   Example LR schedule:
+   Epochs 0-5: Warmup from 1e-6 to 1e-3
+   Epochs 5-30: LR = 1e-3
+   Epochs 30-60: LR = 1e-4 (×0.1)
+   Epochs 60-90: LR = 1e-5 (×0.1)
+   Epochs 90+: LR = 1e-6 (×0.1)
+
+WHEN TO USE STEP DECAY:
+   
+   Advantages:
+   ✓ Simple and interpretable
+   ✓ Works well for smaller models
+   ✓ Explicit control over decay timing
+   
+   Disadvantages:
+   ✗ Requires manual tuning of milestones
+   ✗ Sudden drops can destabilize training
+   ✗ Less smooth than cosine annealing
+   
+   Recommended for:
+   - Baseline experiments
+   - When you have specific training phases
+   - Reproducing older papers
+
+USAGE EXAMPLES:
+   
+   Via Hydra config:
+   ```yaml
+   scheduler:
+     _target_: schedulers.multi_step_lr.multi_step_lr
+     milestones: "30+60+90"
+     gamma: 0.1
+     warmup_iter: 1000
+     warmup_init_lr: 1e-6
+   ```
+   
+   Directly in code:
+   ```python
+   scheduler = multi_step_lr(
+       optimizer, 
+       milestones=[30, 60, 90],
+       gamma=0.1,
+       warmup_iter=1000
+   )
+   ```
+
+RELATED FILES:
+   - schedulers/cosine.py: Alternative smooth decay scheduler
+   - tasks/*: Configure in configure_optimizers()
+"""
 #*----------------------------------------------------------------------------*
 #* Copyright (C) 2025 ETH Zurich, Switzerland                                 *
 #* SPDX-License-Identifier: Apache-2.0                                        *
