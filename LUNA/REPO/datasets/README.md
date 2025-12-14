@@ -2,7 +2,9 @@ Copyright (C) 2025 ETH Zurich, Switzerland. SPDX-License-Identifier: Apache-2.0.
 
 # Datasets
 
-This directory contains the PyTorch `Dataset` classes for the project. In PyTorch, a `Dataset` class is responsible for storing and providing access to the samples in your data (e.g., EEG signals and their corresponding labels). This directory defines how individual data points are loaded and processed.
+This directory contains the PyTorch `Dataset` classes for the project. In PyTorch, a `Dataset` class is responsible for storing and providing access to the samples in your data (e.g., EEG/EMG signals and their corresponding labels). This directory defines how individual data points are loaded and processed.
+
+**Now supports both EEG and sEMG datasets!**
 
 ---
 
@@ -54,3 +56,90 @@ Our framework is primarily designed to work with several of the Temple Universit
 -   **Purpose**: The Siena dataset is used for self-supervised pre-training.
 -   **Size**: 14 subjects and 141 hours of EEG data. Includes 29 electrodes.
 -   **Usage**: We use this dataset to have different electrode configurations in out pre-training data, in addition to TUEG dataset.
+
+---
+
+## sEMG (Surface Electromyography) Datasets
+
+The `semg/` subdirectory contains dataset loaders for surface EMG data. Unlike EEG, sEMG datasets:
+- Have variable channel counts (4-320 channels)
+- Support both **gesture classification** AND **pose regression**
+- Don't have standardized electrode placements
+- Often include kinematic labels (glove DOFs, forces)
+
+### sEMG Dataset Loaders
+
+#### 1. **sEMGHDF5Dataset** (`semg/semg_hdf5_dataset.py`)
+Generic HDF5 loader for sEMG data supporting multiple task types:
+- `mode='pretrain'`: Self-supervised (no labels)
+- `mode='classify'`: Gesture classification
+- `mode='regress'`: Pose regression (joint angles)
+
+#### 2. **NinaproDataset** (`semg/ninapro_dataset.py`)
+Loader for the Ninapro database family, the most widely used sEMG dataset:
+
+| Database | Channels | Subjects | Gestures | Sampling Rate | Hardware |
+|----------|----------|----------|----------|---------------|----------|
+| DB1 | 10 | 27 | 52 | 100 Hz | Otto Bock MyoBock |
+| DB2 | 12 | 40 | 49 | 2000 Hz | Delsys Trigno |
+| DB3 | 12 | 11 | 49 | 2000 Hz | Delsys (amputees) |
+| DB4 | 12 | 10 | 52 | 2000 Hz | Cometa |
+| DB5 | 16 | 10 | 52 | 200 Hz | 2× Myo armband |
+| DB6 | 14 | 10 | 7 | 2000 Hz | Delsys (multi-day) |
+| DB7 | 12 | 20 | 40 | 2000 Hz | Delsys + IMU |
+| DB8 | 16 | 10 | 9 | 2000 Hz | Delsys (finger regression) |
+
+#### 3. **NinaproPoseDataset** (`semg/ninapro_dataset.py`)
+For pose regression using CyberGlove data (DB1, DB2, DB4, DB5, DB7, DB8):
+- Returns continuous joint angles (18-22 DOF)
+- Perfect for EMG → hand pose regression tasks
+
+### sEMG Sample Format
+
+All sEMG datasets return dict-style samples:
+```python
+{
+    'input': tensor [C, T],           # EMG signal
+    'label': tensor or None,          # Gesture class (classification)
+    'pose': tensor [D] or None,       # Joint angles (regression)
+    'subject_id': int,                # For subject-independent splits
+    'num_channels': int,              # For channel-agnostic batching
+    'dataset_id': str,                # Source dataset identifier
+}
+```
+
+### Preprocessing sEMG Data
+
+To preprocess raw Ninapro data into HDF5 format:
+```bash
+python make_datasets/process_ninapro.py \
+    --db db2 \
+    --root_dir /data/ninapro/db2 \
+    --output_dir /processed/ninapro \
+    --mode classify  # or 'regress' for pose regression
+```
+
+---
+
+## Recommended sEMG Datasets by Task
+
+### For Pose Regression (EMG → Hand Kinematics)
+Best datasets with continuous joint angles:
+- **emg2pose** (Meta): 16ch wristband, full 3D hand, 370 hours
+- **Ninapro DB7/DB8**: Designed for finger regression
+- **Ninapro DB1/2/4/5**: 22-DOF CyberGlove
+- **SEEDS**: 134ch HD + 18-DOF glove
+
+### For Channel-Agnostic Training
+Mix these datasets to learn representations that work across channel counts:
+- Train on HD (64+ channels): CapgMyo, CSL-HDEMG, SEEDS
+- Validate on mid-channel (10-16): DB2, DB5, GRABMyo
+- Test on low-channel (4-8): UCI EMG, FORS-EMG
+
+### For Cross-Device Evaluation
+Same gestures, different hardware:
+- DB1 (MyoBock, 10ch) ↔ DB4 (Cometa, 12ch) ↔ DB5 (Myo, 16ch)
+
+### For Multi-Day/Temporal Drift
+- DB6: 5 days × 2 sessions
+- GRABMyo: 3 days (Day 1, 8, 29)
