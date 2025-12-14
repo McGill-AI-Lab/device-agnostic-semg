@@ -122,3 +122,116 @@ data_module:
       val_size: 5
       test_size: 5
 ```
+
+---
+
+## sEMG Data Modules
+
+The `semg_data_module.py` file contains data modules specifically designed for surface EMG data, which differs from EEG in several important ways:
+
+- **Variable channel counts** (4-320 channels across datasets)
+- **No standardized electrode placements**
+- **Both classification AND regression** tasks
+- **Dict-style samples** for flexibility
+
+### 5. **sEMG Data Module (`semg_data_module.py`)**
+
+Basic data module for a single sEMG dataset or pre-split train/val/test sets.
+
+**Key Features:**
+- Works with any sEMG dataset (Ninapro, emg2pose, etc.)
+- Custom collate function for dict-style samples
+- Supports both classification and regression
+
+**Configuration Example:**
+```yaml
+data_module:
+  _target_: 'data_module.semg_data_module.sEMGDataModule'
+  train_dataset:
+    _target_: 'datasets.semg.ninapro_dataset.NinaproDataset'
+    hdf5_file: '${env:DATA_PATH}/ninapro/db2/train.h5'
+    db_version: 'db2'
+  val_dataset:
+    _target_: 'datasets.semg.ninapro_dataset.NinaproDataset'
+    hdf5_file: '${env:DATA_PATH}/ninapro/db2/val.h5'
+    db_version: 'db2'
+  batch_size: ${batch_size}
+  num_workers: ${num_workers}
+```
+
+### 6. **Multi-Dataset sEMG Module (`semg_data_module.py`)**
+
+Combines multiple sEMG datasets with varying channel counts, grouping by channel count for efficient batching.
+
+**Key Features:**
+- **Channel grouping**: Datasets with same channel count are batched together
+- **Sequential loading**: Iterates through channel groups sequentially
+- **Mixed training**: Train on 10ch, 12ch, 16ch datasets simultaneously
+
+**Configuration Example:**
+```yaml
+data_module:
+  _target_: 'data_module.semg_data_module.MultiDatasetEMGModule'
+  group_by_channels: true
+  batch_size: ${batch_size}
+  num_workers: ${num_workers}
+  datasets:
+    ninapro_db2:
+      _target_: 'datasets.semg.ninapro_dataset.NinaproDataset'
+      hdf5_file: '${env:DATA_PATH}/ninapro/db2/all.h5'
+      db_version: 'db2'  # 12 channels
+    ninapro_db5:
+      _target_: 'datasets.semg.ninapro_dataset.NinaproDataset'
+      hdf5_file: '${env:DATA_PATH}/ninapro/db5/all.h5'
+      db_version: 'db5'  # 16 channels
+```
+
+### 7. **Subject-Independent sEMG Module (`semg_data_module.py`)**
+
+Ensures no subject appears in multiple splits to prevent data leakage. Critical for sEMG where subjects have unique muscle patterns.
+
+**Key Features:**
+- Scans dataset for subject IDs
+- Splits by subject (not by sample)
+- Reports split statistics
+
+**Configuration Example:**
+```yaml
+data_module:
+  _target_: 'data_module.semg_data_module.SubjectIndependentEMGModule'
+  dataset:
+    _target_: 'datasets.semg.ninapro_dataset.NinaproDataset'
+    hdf5_file: '${env:DATA_PATH}/ninapro/db2/all.h5'
+    db_version: 'db2'
+  train_subjects_ratio: 0.6
+  val_subjects_ratio: 0.2
+  batch_size: ${batch_size}
+```
+
+---
+
+## sEMG Collate Functions
+
+The sEMG data modules provide two collate functions:
+
+### `semg_collate_fn`
+Standard collate for samples with same channel count. Returns dict with batched tensors.
+
+### `semg_collate_padded`
+Pads samples with different channel counts to the maximum in the batch. Returns:
+- `input`: Padded EMG [B, C_max, T]
+- `channel_mask`: Binary mask [B, C_max] indicating valid channels
+- `original_channels`: Original channel count per sample
+
+---
+
+## Choosing a Data Module
+
+| Use Case | Data Module |
+|----------|-------------|
+| Single EEG/EMG dataset, pre-split | `FinetuneDataModule` or `sEMGDataModule` |
+| Multi-dataset pretraining (same channels) | `PretrainDataModule` |
+| Multi-dataset pretraining (varied channels) | `VaryingChannelsDataModule` or `MultiDatasetEMGModule` |
+| Subject-independent evaluation (EEG) | `SubjectIndependentDataModule` |
+| Subject-independent evaluation (sEMG) | `SubjectIndependentEMGModule` |
+| Channel-agnostic sEMG training | `MultiDatasetEMGModule` with `group_by_channels=True` |
