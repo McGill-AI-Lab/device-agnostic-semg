@@ -1,6 +1,6 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║              NINAPRO_DATASET.PY - NINAPRO sEMG DATABASE LOADER              ║
+║              NINAPRO_DATASET.PY - NINAPRO sEMG DATABASE LOADER               ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 PURPOSE:

@@ -3,3 +3,5 @@ TODO from LUNA:
 [] loss functions that are more suitable for sEMG, if needed (maybe add contrastive, etc.)
 [] the decoder (for regression tasks)
 
+TODO for Project:
+[] Make sure to include and check the licenses for all datasets
