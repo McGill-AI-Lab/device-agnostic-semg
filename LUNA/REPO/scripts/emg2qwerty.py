@@ -9,6 +9,7 @@ import os
 import requests 
 from pathlib import Path
 import tarfile
+from tqdm import tqdm
 
 DATASET_NAME = "emg2qwerty"
 
@@ -31,9 +32,17 @@ def download_emg2qwerty(data_root = "./data"):
         response = requests.get(url, stream=True)
         response.raise_for_status()
         
-        with open(tar_path, "wb") as f:
+        total_size = int(response.headers.get('content-length', 0))
+        with open(tar_path, "wb") as f, tqdm(
+            desc="    Progress",
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+                pbar.update(len(chunk))
         
         # Extract tar.gz
         print(f"  Extracting archive...")

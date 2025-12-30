@@ -11,6 +11,7 @@ import requests
 from pathlib import Path
 import zipfile
 import shutil
+from tqdm import tqdm
 
 DATASET_NAME = "MyoKi"
 
@@ -33,9 +34,17 @@ def download_myoki(data_root = "./data"):
         response = requests.get(url, stream=True)
         response.raise_for_status()
         
-        with open(zip_path, "wb") as f:
+        total_size = int(response.headers.get('content-length', 0))
+        with open(zip_path, "wb") as f, tqdm(
+            desc="    Progress",
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+                pbar.update(len(chunk))
         
         # Extract zip
         print(f"  Extracting ZIP archive...")

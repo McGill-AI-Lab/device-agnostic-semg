@@ -11,6 +11,7 @@ import os
 import requests 
 from pathlib import Path
 import zipfile
+from tqdm import tqdm
 
 DATASET_NAME = "Ninapro"
 
@@ -41,14 +42,22 @@ def download_ninapro(data_root = "./data"):
             try:
                 response = requests.get(url, stream=True)
                 response.raise_for_status()
-                with open(zip_path, "wb") as f:
+                total_size = int(response.headers.get('content-length', 0))
+                with open(zip_path, "wb") as f, tqdm(
+                    desc=f"      DB1 s{subject_str}",
+                    total=total_size,
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    leave=False,
+                ) as pbar:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
+                        pbar.update(len(chunk))
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"    Downloaded DB1 subject {subject_str}")
             except Exception as e:
                 print(f"    Failed DB1 subject {subject_str}: {e}")
         
@@ -67,14 +76,22 @@ def download_ninapro(data_root = "./data"):
             try:
                 response = requests.get(url, stream=True)
                 response.raise_for_status()
-                with open(zip_path, "wb") as f:
+                total_size = int(response.headers.get('content-length', 0))
+                with open(zip_path, "wb") as f, tqdm(
+                    desc=f"      DB2 s{subject_str}",
+                    total=total_size,
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    leave=False,
+                ) as pbar:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
+                        pbar.update(len(chunk))
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"    Downloaded DB2 subject {subject_str}")
             except Exception as e:
                 print(f"    Failed DB2 subject {subject_str}: {e}")
         
@@ -93,14 +110,22 @@ def download_ninapro(data_root = "./data"):
             try:
                 response = requests.get(url, stream=True)
                 response.raise_for_status()
-                with open(zip_path, "wb") as f:
+                total_size = int(response.headers.get('content-length', 0))
+                with open(zip_path, "wb") as f, tqdm(
+                    desc=f"      DB3 s{subject_str}",
+                    total=total_size,
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    leave=False,
+                ) as pbar:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
+                        pbar.update(len(chunk))
                 
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"    Downloaded DB3 subject {subject_str}")
             except Exception as e:
                 print(f"  Failed DB3 subject {subject_str}: {e}")
         

@@ -8,6 +8,7 @@ Size: N/A per file (44 subjects × 7 gestures = ~308 individual HDF5 files)
 import os
 import requests 
 from pathlib import Path
+from tqdm import tqdm
 
 DATASET_NAME = "putEMG"
 
@@ -32,7 +33,9 @@ def download_putemg(data_root = "./data"):
         for data_type in data_types:
             data_dir = raw_dir / data_type
             data_dir.mkdir(exist_ok=True)
-            for subject_id in range(1, 45):  # 44 subjects in putEMG
+            
+            # Create outer progress bar for all subjects
+            for subject_id in tqdm(range(1, 45), desc="    Subjects", position=0):  # 44 subjects in putEMG
                 subject_str = f"{subject_id:02d}"
                 
                 for gesture_id in range(1, 8):  # 7 gestures
@@ -43,15 +46,23 @@ def download_putemg(data_root = "./data"):
                     try:
                         response = requests.get(file_url, stream=True)
                         if response.status_code == 200:
-                            with open(file_path, "wb") as f:
+                            total_size = int(response.headers.get('content-length', 0))
+                            with open(file_path, "wb") as f, tqdm(
+                                desc=f"      {filename}",
+                                total=total_size,
+                                unit='B',
+                                unit_scale=True,
+                                unit_divisor=1024,
+                                leave=False,
+                                position=1,
+                            ) as pbar:
                                 for chunk in response.iter_content(chunk_size=8192):
                                     f.write(chunk)
-                            print(f"    Downloaded: {filename}")
+                                    pbar.update(len(chunk))
                         elif response.status_code == 404:
                             # File doesn't exist, skip
                             continue
                     except Exception as e:
-                        print(f"    Skipped {filename}: {e}")
                         continue
         
         print(f"Downloaded {DATASET_NAME}")

@@ -9,6 +9,7 @@ import os
 import requests 
 from pathlib import Path
 import zipfile
+from tqdm import tqdm
 
 DATASET_NAME = "multi-day"
 
@@ -31,9 +32,17 @@ def download_multi_day(data_root = "./data"):
         response1 = requests.get(url_part1, stream=True)
         response1.raise_for_status()
         
-        with open(zip_path1, "wb") as f:
+        total_size = int(response1.headers.get('content-length', 0))
+        with open(zip_path1, "wb") as f, tqdm(
+            desc="    Progress",
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             for chunk in response1.iter_content(chunk_size=8192):
                 f.write(chunk)
+                pbar.update(len(chunk))
         
         print(f"  Extracting part 1...")
         with zipfile.ZipFile(zip_path1, 'r') as zip_ref:
@@ -48,9 +57,17 @@ def download_multi_day(data_root = "./data"):
         response2 = requests.get(url_part2, stream=True)
         response2.raise_for_status()
         
-        with open(zip_path2, "wb") as f:
+        total_size = int(response2.headers.get('content-length', 0))
+        with open(zip_path2, "wb") as f, tqdm(
+            desc="    Progress",
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             for chunk in response2.iter_content(chunk_size=8192):
                 f.write(chunk)
+                pbar.update(len(chunk))
         
         print(f"  Extracting part 2...")
         with zipfile.ZipFile(zip_path2, 'r') as zip_ref:

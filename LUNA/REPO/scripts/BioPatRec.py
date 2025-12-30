@@ -10,6 +10,7 @@ import requests
 import zipfile
 import shutil
 from pathlib import Path
+from tqdm import tqdm
 
 DATASET_NAME = "BioPatRec"
 
@@ -31,10 +32,18 @@ def download_biopatrec(data_root = "./data"):
         print(f"  Downloading from GitHub...")
         with requests.get(url, stream=True, timeout=60) as r:
             r.raise_for_status()
-            with open(zip_path, "wb") as f:
+            total_size = int(r.headers.get('content-length', 0))
+            with open(zip_path, "wb") as f, tqdm(
+                desc="    Progress",
+                total=total_size,
+                unit='B',
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as pbar:
                 for chunk in r.iter_content(chunk_size=1024 * 1024):
                     if chunk:
                         f.write(chunk)
+                        pbar.update(len(chunk))
 
         print(f"  Extracting ZIP archive...")
         with zipfile.ZipFile(zip_path, "r") as zf:

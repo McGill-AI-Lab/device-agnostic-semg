@@ -9,6 +9,7 @@ import os
 import requests 
 from pathlib import Path
 import tarfile
+from tqdm import tqdm
 
 DATASET_NAME = "emg2pose"
 MINI = True
@@ -37,18 +38,17 @@ def download_emg2pose(data_root = "./data"):
         response.raise_for_status()
         
         total_size = int(response.headers.get('content-length', 0))
-        downloaded = 0
         
-        with open(tar_path, "wb") as f:
+        with open(tar_path, "wb") as f, tqdm(
+            desc="    Progress",
+            total=total_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-                downloaded += len(chunk)
-                if total_size > 0 and downloaded % (1024 * 1024 * 100) == 0:  # Print every 100MB
-                    progress = (downloaded / total_size) * 100
-                    if MINI:
-                        print(f"  Progress: {downloaded / (1024**2):.2f} MiB / {total_size / (1024**2):.2f} MiB ({progress:.1f}%)")
-                    else:
-                        print(f"  Progress: {downloaded / (1024**3):.2f} GiB / {total_size / (1024**3):.2f} GiB ({progress:.1f}%)")
+                pbar.update(len(chunk))
         
         print(f"  Extracting archive...")
         with tarfile.open(tar_path, 'r') as tar_ref:
