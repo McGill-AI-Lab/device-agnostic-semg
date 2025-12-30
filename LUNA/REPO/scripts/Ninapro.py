@@ -1,3 +1,12 @@
+"""
+Ninapro - Large-scale sEMG and kinematic benchmark dataset across 9 databases (DB1-DB9).
+DB1: 27 subjects, 52 movements. DB2: 40 subjects. DB3: 11 subjects. DB4: 10. DB5: 10. DB6: 10. DB7: 22. DB8: 12. DB9: 77.
+
+Specs: 10 Otto Bock electrodes (DB1), Cyberglove with 22 sensors, 52+ hand movements, 
+       10 repetitions, synchronized EMG/glove/stimulus data
+Format: ZIP archives containing MATLAB .mat files per subject (subject/exercise/emg/glove/stimulus/repetition variables)
+Size: N/A per subject (varies by database, typically several MB per subject)
+"""
 import os
 import requests 
 from pathlib import Path
@@ -7,16 +16,18 @@ DATASET_NAME = "Ninapro"
 
 def download_ninapro(data_root = "./data"):
     try:
+        print(f"Starting download for {DATASET_NAME}")
         dataset_root = Path(data_root) / DATASET_NAME
         raw_dir = dataset_root / "raw"
         preprocessed_dir = dataset_root / "preprocessed"
         
         # Create all directories
+        print(f"  Creating directories at {dataset_root}")
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
         # DB1: 27 subjects
-        print("Downloading DB1...")
+        print("  Downloading DB1 (27 subjects)...")
         db1_dir = raw_dir / "DB1"
         db1_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 28):
@@ -37,12 +48,12 @@ def download_ninapro(data_root = "./data"):
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"  Downloaded DB1 subject {subject_str}")
+                print(f"    Downloaded DB1 subject {subject_str}")
             except Exception as e:
-                print(f"  Failed DB1 subject {subject_str}: {e}")
+                print(f"    Failed DB1 subject {subject_str}: {e}")
         
         # DB2: 40 subjects
-        print("Downloading DB2...")
+        print("  Downloading DB2 (40 subjects)...")
         db2_dir = raw_dir / "DB2"
         db2_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 41):
@@ -63,12 +74,12 @@ def download_ninapro(data_root = "./data"):
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"  Downloaded DB2 subject {subject_str}")
+                print(f"    Downloaded DB2 subject {subject_str}")
             except Exception as e:
-                print(f"  Failed DB2 subject {subject_str}: {e}")
+                print(f"    Failed DB2 subject {subject_str}: {e}")
         
         # DB3: 11 subjects
-        print("Downloading DB3...")
+        print("  Downloading DB3 (11 subjects)...")
         db3_dir = raw_dir / "DB3"
         db3_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 12):
@@ -89,7 +100,7 @@ def download_ninapro(data_root = "./data"):
                 with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                     zip_ref.extractall(subject_dir)
                 zip_path.unlink()
-                print(f"  Downloaded DB3 subject {subject_str}")
+                print(f"    Downloaded DB3 subject {subject_str}")
             except Exception as e:
                 print(f"  Failed DB3 subject {subject_str}: {e}")
         
@@ -267,5 +278,5 @@ def download_ninapro(data_root = "./data"):
         return None
 
 if __name__ == "__main__":
-    download_ninapro()
+    download_ninapro(data_root="/scratch/klambert/sEMG")
 

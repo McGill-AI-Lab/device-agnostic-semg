@@ -1,3 +1,10 @@
+"""
+putEMG - EMG dataset from Poznań University of Technology BioLab with 44 subjects, 7 gestures.
+
+Specs: Multiple electrode configurations, repeated trials, standardized acquisition protocol
+Format: Individual HDF5 files (emg_gestures-{subject:02d}-{gesture:03d}.hdf5)
+Size: N/A per file (44 subjects × 7 gestures = ~308 individual HDF5 files)
+"""
 import os
 import requests 
 from pathlib import Path
@@ -6,11 +13,13 @@ DATASET_NAME = "putEMG"
 
 def download_putemg(data_root = "./data"):
     try:
+        print(f"Starting download for {DATASET_NAME}")
         dataset_root = Path(data_root) / DATASET_NAME
         raw_dir = dataset_root / "raw"
         preprocessed_dir = dataset_root / "preprocessed"
         
         # Create all directories
+        print(f"  Creating directories at {dataset_root}")
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
@@ -19,6 +28,7 @@ def download_putemg(data_root = "./data"):
         # Dataset structure: Data-HDF5 format organized by subject and gesture
         data_types = ["Data-HDF5"]
         
+        print(f"  Downloading individual HDF5 files (44 subjects × 7 gestures)...")
         for data_type in data_types:
             data_dir = raw_dir / data_type
             data_dir.mkdir(exist_ok=True)
@@ -36,12 +46,12 @@ def download_putemg(data_root = "./data"):
                             with open(file_path, "wb") as f:
                                 for chunk in response.iter_content(chunk_size=8192):
                                     f.write(chunk)
-                            print(f"  Downloaded: {filename}")
+                            print(f"    Downloaded: {filename}")
                         elif response.status_code == 404:
                             # File doesn't exist, skip
                             continue
                     except Exception as e:
-                        print(f"  Skipped {filename}: {e}")
+                        print(f"    Skipped {filename}: {e}")
                         continue
         
         print(f"Downloaded {DATASET_NAME}")
@@ -52,5 +62,5 @@ def download_putemg(data_root = "./data"):
         return None
 
 if __name__ == "__main__":
-    download_putemg()
+    download_putemg(data_root="/scratch/klambert/sEMG")
 

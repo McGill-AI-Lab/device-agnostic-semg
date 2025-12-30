@@ -1,3 +1,10 @@
+"""
+CSL-HDEMG - High-density EMG dataset (currently unavailable).
+
+Specs: N/A (dataset unavailable)
+Format: N/A
+Size: N/A
+"""
 import os
 import requests 
 from pathlib import Path
@@ -5,6 +12,8 @@ from pathlib import Path
 DATASET_NAME = "CSL-HDEMG"
 
 def download_csl_hdemg(data_root = "./data"):
+    print(f"Starting download for {DATASET_NAME}")
+    print(f"  {DATASET_NAME} is currently unavailable.")
     pass # unavailable
     # try:
     #     dataset_root = Path(data_root) / DATASET_NAME
@@ -33,4 +42,4 @@ def download_csl_hdemg(data_root = "./data"):
      #     return None
 
 if __name__ == "__main__":
-    download_csl_hdemg()
+    download_csl_hdemg(data_root="/scratch/klambert/sEMG")

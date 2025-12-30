@@ -10,7 +10,8 @@ from MyoKi import download_myoki
 from Ninapro import download_ninapro
 from putEMG import download_putemg
 from SEEDS import download_seeds
-from typing import download_typing
+typing_dataset = importlib.import_module("typing-dataset")
+download_typing = typing_dataset.download_typing
 from Zenodo import download_zenodo
 
 CSL_HDEMG = importlib.import_module("CSL-HDEMG")

@@ -7,3 +7,4 @@ few_shot.txt
 AGENTS.md
 data/*
 !data/README.md
+emg/

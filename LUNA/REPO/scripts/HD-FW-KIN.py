@@ -1,3 +1,10 @@
+"""
+HD-FW-KIN - High-density surface EMG with hand kinematics from PhysioNet (requires account + license).
+
+Specs: High-density sEMG recordings, synchronized hand kinematic measurements
+Format: PhysioNet format (requires wget with authentication)
+Size: N/A
+"""
 import os
 import requests 
 from pathlib import Path
@@ -8,23 +15,26 @@ DATASET_NAME = "HD-FW-KIN"
 
 def download_hd_fw_kin(data_root = "./data"):
     try:
+        print(f"Starting download for {DATASET_NAME}")
         dataset_root = Path(data_root) / DATASET_NAME
         raw_dir = dataset_root / "raw"
         preprocessed_dir = dataset_root / "preprocessed"
         
         # Create all directories
+        print(f"  Creating directories at {dataset_root}")
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        print(f"\n{DATASET_NAME} requires a PhysioNet account and license agreement.")
-        print("Please create an account at: https://physionet.org/")
-        print("Then sign the data use agreement for this dataset.")
+        print(f"\n  {DATASET_NAME} requires a PhysioNet account and license agreement.")
+        print("  Please create an account at: https://physionet.org/")
+        print("  Then sign the data use agreement for this dataset.")
         
-        username = input("Enter PhysioNet username: ")
-        password = getpass.getpass("Enter PhysioNet password: ")
+        username = input("  Enter PhysioNet username: ")
+        password = getpass.getpass("  Enter PhysioNet password: ")
         
         url = "https://physionet.org/files/hand-kinematics-semg/1.0.0/"
         
+        print(f"  Downloading from PhysioNet using wget...")
         result = subprocess.run([
             "wget", "-r", "-N", "-c", "-np",
             "--user", username,
@@ -45,5 +55,5 @@ def download_hd_fw_kin(data_root = "./data"):
         return None
 
 if __name__ == "__main__":
-    download_hd_fw_kin()
+    download_hd_fw_kin(data_root="/scratch/klambert/sEMG")
 
