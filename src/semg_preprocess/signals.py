@@ -45,3 +45,49 @@ def bandpass_filter(x: np.ndarray,
     )
     # axis=0 => filter along time dimension
     return signal.sosfiltfilt(sos, x, axis=0)
+
+def notch_filter(x: np.ndarray,
+                 fs: float,
+                 freq: float = 60.0,
+                 q: float = 30.0) -> np.ndarray:
+    """
+    Apply a notch filter around a given frequency (e.g. to remove 50/60 Hz mains hum).
+
+    Args:
+        x: array of shape [T, C]
+        fs: sampling rate
+        freq: notch center frequency in Hz
+        q: quality factor (higher = narrower notch)
+
+    Returns:
+        Filtered array of shape [T, C].
+    """
+    nyq = fs / 2.0
+    w0 = freq / nyq  # normalized frequency
+
+    b, a = signal.iirnotch(w0, q)
+    return signal.filtfilt(b, a, x, axis=0)
+
+def resample_signal(x: np.ndarray,
+                    fs_in: float,
+                    fs_target: float) -> np.ndarray:
+    """
+    Resample multichannel data from fs_in to fs_target.
+
+    Uses Fourier-based resampling (fine for offline preprocessing).
+
+    Args:
+        x: array of shape [T, C]
+        fs_in: original sampling rate
+        fs_target: desired sampling rate
+
+    Returns:
+        Resampled array of shape [T_new, C].
+    """
+    if np.isclose(fs_in, fs_target):
+        return x
+
+    t, _ = x.shape
+    t_new = int(round(t * fs_target / fs_in))
+    return signal.resample(x, t_new, axis=0)
+
