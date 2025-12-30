@@ -1,6 +1,7 @@
 import os
 import requests 
 from pathlib import Path
+import zipfile
 
 DATASET_NAME = "multi-day"
 
@@ -14,17 +15,39 @@ def download_multi_day(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-        # Example:
-        # url = "https://example.com/dataset.zip"
-        # response = requests.get(url, stream=True)
-        # with open(raw_dir / "dataset.zip", "wb") as f:
-        #     for chunk in response.iter_content(chunk_size=8192):
-        #         f.write(chunk)
+        url_part1 = "https://zenodo.org/records/15077957/files/Data.zip?download=1"
+        zip_path1 = raw_dir / "multi-day-part1.zip"
         
-        print(f"Downloaded {DATASET_NAME}")
+        print(f"Downloading {DATASET_NAME} part 1...")
+        response1 = requests.get(url_part1, stream=True)
+        response1.raise_for_status()
+        
+        with open(zip_path1, "wb") as f:
+            for chunk in response1.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        with zipfile.ZipFile(zip_path1, 'r') as zip_ref:
+            zip_ref.extractall(raw_dir / "part1")
+        
+        zip_path1.unlink()
+        
+        url_part2 = "https://zenodo.org/records/15070187/files/Data.zip?download=1"
+        zip_path2 = raw_dir / "multi-day-part2.zip"
+        
+        print(f"Downloading {DATASET_NAME} part 2...")
+        response2 = requests.get(url_part2, stream=True)
+        response2.raise_for_status()
+        
+        with open(zip_path2, "wb") as f:
+            for chunk in response2.iter_content(chunk_size=8192):
+                f.write(chunk)
+        
+        with zipfile.ZipFile(zip_path2, 'r') as zip_ref:
+            zip_ref.extractall(raw_dir / "part2")
+        
+        zip_path2.unlink()
+        
+        print(f"Downloaded {DATASET_NAME} (both parts)")
         return raw_dir
         
     except Exception as e:

@@ -14,20 +14,18 @@ def download_ninapro(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-        # Example:
-        # url = "https://example.com/dataset.zip"
-        # response = requests.get(url, stream=True)
-        # with open(raw_dir / "dataset.zip", "wb") as f:
-        #     for chunk in response.iter_content(chunk_size=8192):
-        #         f.write(chunk)
+
+        # Create subfolders for DB1-10
+        for i in range(1, 11):
+            db_dir = raw_dir / f"DB{i}"
+            db_dir.mkdir(exist_ok=True)
         
-        print(f"Downloaded {DATASET_NAME}")
+        print(f"{DATASET_NAME} structure created. Please manually download from https://ninapro.hevs.ch/")
+        print("Place each database in its corresponding DB1-DB10 subfolder.")
+        
         return raw_dir
         
     except Exception as e:
-        print(f"Error downloading {DATASET_NAME}: {e}")
+        print(f"Error setting up {DATASET_NAME}: {e}")
         return None
 

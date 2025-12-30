@@ -34,7 +34,9 @@ download_muscle_fatigue = muscle_fatigue.download_muscle_fatigue
 UCI_EMG = importlib.import_module("UCI-EMG")
 download_uci_emg = UCI_EMG.download_uci_emg
 
-def main(data_root="./data"):
+DATA_ROOT = "/scratch/klambert/sEMG"
+
+def main():
     """Download all EMG datasets to the specified data directory."""
     download_functions = [
         download_biopatrec,
@@ -60,7 +62,7 @@ def main(data_root="./data"):
     
     print(f"Downloading {len(download_functions)} datasets...")
     for download_func in download_functions:
-        download_func(data_root)
+        download_func(DATA_ROOT)
     
     print("\nAll downloads complete!")
 

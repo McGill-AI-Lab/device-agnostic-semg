@@ -14,20 +14,17 @@ def download_fors_emg(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-        # Example:
-        # url = "https://example.com/dataset.zip"
-        # response = requests.get(url, stream=True)
-        # with open(raw_dir / "dataset.zip", "wb") as f:
-        #     for chunk in response.iter_content(chunk_size=8192):
-        #         f.write(chunk)
+        print(f"{DATASET_NAME} is a Kaggle dataset and requires Kaggle API or manual download.")
+        print("Please download from: https://www.kaggle.com/datasets/ummerummanchaity/fors-emg-a-novel-semg-dataset/data")
+        print(f"Place files in: {raw_dir}")
+        print("\nTo use Kaggle API:")
+        print("  1. Install: pip install kaggle")
+        print("  2. Set up credentials: https://www.kaggle.com/docs/api")
+        print("  3. Run: kaggle datasets download -d ummerummanchaity/fors-emg-a-novel-semg-dataset")
         
-        print(f"Downloaded {DATASET_NAME}")
         return raw_dir
         
     except Exception as e:
-        print(f"Error downloading {DATASET_NAME}: {e}")
+        print(f"Error setting up {DATASET_NAME}: {e}")
         return None
 
