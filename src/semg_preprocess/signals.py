@@ -2,7 +2,7 @@
 import numpy as np
 from scipy import signal
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
 @dataclass
 class PreprocessConfig:
@@ -73,8 +73,7 @@ def resample_signal(x: np.ndarray,
                     fs_target: float) -> np.ndarray:
     """
     Resample multichannel data from fs_in to fs_target.
-
-    Uses Fourier-based resampling (fine for offline preprocessing).
+    Uses Fourier-based resampling.
 
     Args:
         x: array of shape [T, C]
@@ -90,4 +89,26 @@ def resample_signal(x: np.ndarray,
     t, _ = x.shape
     t_new = int(round(t * fs_target / fs_in))
     return signal.resample(x, t_new, axis=0)
+
+
+def zscore_per_channel(x: np.ndarray,
+                       eps: float = 1e-6) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Per-channel z-normalization: (x - mean) / std, along time.
+
+    Args:
+        x: array of shape [T, C]
+        eps: small constant to avoid division by zero
+
+    Returns:
+        x_norm: normalized data [T, C]
+        mean: per-channel mean [C]
+        std: per-channel std [C]
+    """
+    mean = x.mean(axis=0)
+    std = x.std(axis=0) + eps
+    x_norm = (x - mean) / std
+    return x_norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32)
+
+
 
