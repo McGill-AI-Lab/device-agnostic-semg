@@ -16,11 +16,6 @@ def download_myoki(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-       
-        # Download GitHub repo as zip
         url = "https://github.com/michidk/myo-dataset/archive/refs/heads/main.zip"
         zip_path = raw_dir / "myo-dataset.zip"
         
