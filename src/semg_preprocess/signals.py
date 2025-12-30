@@ -2,7 +2,7 @@
 import numpy as np
 from scipy import signal
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 
 @dataclass
 class PreprocessConfig:
@@ -110,5 +110,63 @@ def zscore_per_channel(x: np.ndarray,
     x_norm = (x - mean) / std
     return x_norm.astype(np.float32), mean.astype(np.float32), std.astype(np.float32)
 
+
+def preprocess_continuous_emg(
+    emg: np.ndarray,
+    cfg: PreprocessConfig,
+) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
+    """
+    Full signal preprocessing pipeline for a single continuous EMG sequence.
+
+    Steps:
+      1) Resample to cfg.fs_target
+      2) Band-pass filter
+      3) Optional notch filter
+      4) Optional per-channel z-score normalization
+
+    Args:
+        emg: raw EMG array [T, C] at sampling rate cfg.fs_in
+        cfg: preprocessing configuration
+
+    Returns:
+        emg_proc: processed EMG [T_new, C]
+        stats: dict with any useful statistics (means, stds, etc.)
+    """
+    stats: Dict[str, np.ndarray] = {}
+
+    # 1) Resample
+    emg_resampled = resample_signal(emg, cfg.fs_in, cfg.fs_target)
+
+    # 2) Band-pass
+    emg_bp = bandpass_filter(
+        emg_resampled,
+        fs=cfg.fs_target,
+        low=cfg.bandpass_low,
+        high=cfg.bandpass_high,
+    )
+
+    # 3) Notch (if enabled)
+    if cfg.notch_freq is not None:
+        emg_notched = notch_filter(
+            emg_bp,
+            fs=cfg.fs_target,
+            freq=cfg.notch_freq,
+            q=cfg.notch_q,
+        )
+    else:
+        emg_notched = emg_bp
+
+    # 4) Z-normalize per channel (if enabled)
+    if cfg.z_normalize:
+        emg_norm, mean, std = zscore_per_channel(emg_notched)
+        stats["mean"] = mean
+        stats["std"] = std
+        emg_final = emg_norm
+    else:
+        emg_final = emg_notched.astype(np.float32)
+
+    stats["fs_target"] = np.array(cfg.fs_target, dtype=np.float32)
+
+    return emg_final, stats
 
 
