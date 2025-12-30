@@ -51,3 +51,6 @@ def download_putemg(data_root = "./data"):
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
 
+if __name__ == "__main__":
+    download_putemg()
+

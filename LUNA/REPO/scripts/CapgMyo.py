@@ -15,12 +15,6 @@ def download_capgmyo(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-        print(f"Downloading {DATASET_NAME}...")
-        
-        # Figshare direct download link
         url = "https://figshare.com/ndownloader/articles/7210397/versions/2"
         zip_path = raw_dir / "capgmyo.zip"
         
@@ -44,4 +38,7 @@ def download_capgmyo(data_root = "./data"):
     except Exception as e:
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
+
+if __name__ == "__main__":
+    download_capgmyo()
 

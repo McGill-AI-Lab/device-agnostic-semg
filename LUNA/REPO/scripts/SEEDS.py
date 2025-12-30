@@ -14,7 +14,6 @@ def download_seeds(data_root = "./data"):
         # Create all directories
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
-        
 
         url = "https://springernature.figshare.com/ndownloader/articles/9867962/versions/2"
         zip_path = raw_dir / "seeds.zip"
@@ -39,4 +38,7 @@ def download_seeds(data_root = "./data"):
     except Exception as e:
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
+
+if __name__ == "__main__":
+    download_seeds()
 

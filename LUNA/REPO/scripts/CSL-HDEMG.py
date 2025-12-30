@@ -29,6 +29,8 @@ def download_csl_hdemg(data_root = "./data"):
     #     return raw_dir
     #     
     # except Exception as e:
-    #     print(f"Error downloading {DATASET_NAME}: {e}")
-    #     return None
+     #     print(f"Error downloading {DATASET_NAME}: {e}")
+     #     return None
 
+if __name__ == "__main__":
+    download_csl_hdemg()

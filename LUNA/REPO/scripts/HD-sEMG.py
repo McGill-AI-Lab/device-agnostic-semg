@@ -37,3 +37,6 @@ def download_hd_semg(data_root = "./data"):
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
 
+if __name__ == "__main__":
+    download_hd_semg()
+

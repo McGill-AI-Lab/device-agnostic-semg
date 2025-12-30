@@ -43,10 +43,7 @@ def download_biopatrec(data_root = "./data"):
             shutil.rmtree(extracted_root, ignore_errors=True)
 
         # cleanup
-        try:
-            zip_path.unlink()
-        except FileNotFoundError:
-            pass
+        zip_path.unlink()
         
         print(f"Downloaded {DATASET_NAME}")
         return raw_dir
@@ -54,3 +51,6 @@ def download_biopatrec(data_root = "./data"):
     except Exception as e:
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
+
+if __name__ == "__main__":
+    download_biopatrec()

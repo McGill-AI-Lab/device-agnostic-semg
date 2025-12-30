@@ -15,10 +15,6 @@ def download_emg2qwerty(data_root = "./data"):
         raw_dir.mkdir(parents=True, exist_ok=True)
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
-        # ============================================
-        # DATASET-SPECIFIC DOWNLOAD LOGIC GOES HERE
-        # ============================================
-        # Dataset link from emg2qwerty repo
         url = "https://research.facebook.com/file/1030086308123356/emg2qwerty-dataset.tar.gz"
         tar_path = raw_dir / "emg2qwerty-dataset.tar.gz"
         
@@ -42,4 +38,7 @@ def download_emg2qwerty(data_root = "./data"):
     except Exception as e:
         print(f"Error downloading {DATASET_NAME}: {e}")
         return None
+
+if __name__ == "__main__":
+    download_emg2qwerty()
 

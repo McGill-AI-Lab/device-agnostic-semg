@@ -28,3 +28,6 @@ def download_fors_emg(data_root = "./data"):
         print(f"Error setting up {DATASET_NAME}: {e}")
         return None
 
+if __name__ == "__main__":
+    download_fors_emg()
+
