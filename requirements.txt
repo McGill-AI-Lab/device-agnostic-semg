@@ -9,14 +9,12 @@ lightning
 tqdm
 pandas
 mne
-nvidia-nccl-cu11
+# nvidia-pyindex
+# nvidia-nccl-cu11
 psutil
 pyyaml
-tensorboardX
-git+https://github.com/ildoonet/pytorch-gradual-warmup-lr.git
 scikit-learn
 tensorboard
-tensorrt
 torch_optimizer
 tables
 timm
@@ -26,3 +24,4 @@ torchmetrics
 warmup-scheduler
 safetensors
 rotary-embedding-torch
+requests
