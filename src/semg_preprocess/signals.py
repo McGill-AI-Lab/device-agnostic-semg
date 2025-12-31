@@ -25,7 +25,7 @@ def bandpass_filter(x: np.ndarray,
     Apply a Butterworth band-pass filter to multichannel data.
 
     Args:
-        x: array of shape [T, C] (time x channels)
+        x: array of shape [T, C] (time x channels; time = seconds x fs)
         fs: sampling rate in Hz
         low, high: cutoff frequencies in Hz
         order: filter order

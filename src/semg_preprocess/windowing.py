@@ -47,6 +47,7 @@ def make_emg_pose_windows(
     """
     assert emg.shape[0] == pose.shape[0], "EMG and pose must have same length."
 
+    # Convert milliseconds to samples
     window_size = int(round(window_ms * fs / 1000.0))
     stride = int(round(stride_ms * fs / 1000.0))
 
