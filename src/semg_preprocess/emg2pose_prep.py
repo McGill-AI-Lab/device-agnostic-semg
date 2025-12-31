@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Tuple, List
 
@@ -8,13 +7,9 @@ import pandas as pd
 
 from .signals import PreprocessConfig, preprocess_continuous_emg
 from .windowing import make_emg_pose_windows
+from .utils import load_config
 
 Split = Literal["train", "val", "test"]
-@dataclass
-class Emg2PosePaths:
-    data_root: Path        # path to emg2pose_dataset_mini
-    metadata_csv: Path     # path to metadata.csv inside that folder
-    output_dir: Path       # where to write processed HDF5 files
 
 class Emg2PosePreprocessor:
     """
@@ -25,8 +20,17 @@ class Emg2PosePreprocessor:
       - windowing and saving to a single HDF5 per split
     """
 
-    def __init__(self, paths: Emg2PosePaths, cfg: PreprocessConfig):
-        self.paths = paths
+    def __init__(self, config_path: Path, cfg: PreprocessConfig):
+        config = load_config(config_path)
+        
+        # Get data_root from config
+        data_root = Path(config['paths']['data_root'])
+        
+        # Set up paths: output_dir = data_root/emg2pose/preprocessed
+        self.output_dir = data_root / "emg2pose" / "preprocessed"
+        self.metadata_csv = self.output_dir / "metadata.csv"
+        self.data_root = data_root  # for loading raw data files
+        
         self.cfg = cfg
 
     def load_session(self, h5_path: Path) -> Tuple[np.ndarray, np.ndarray]:
@@ -50,7 +54,7 @@ class Emg2PosePreprocessor:
         return emg, pose
 
     def _collect_split_rows(self, split: Split) -> pd.DataFrame:
-        meta = pd.read_csv(self.paths.metadata_csv)
+        meta = pd.read_csv(self.metadata_csv)
 
         # EMG2Pose metadata columns include:
         # user, session, stage, side, moving_hand, held_out_user,
@@ -73,7 +77,7 @@ class Emg2PosePreprocessor:
         """
         filename_col = "filename"  # TODO: change to real column name
         filename = row[filename_col]
-        return self.paths.data_root / filename
+        return self.data_root / filename
 
     def _process_single_file(
         self,
@@ -143,8 +147,8 @@ class Emg2PosePreprocessor:
           - 'emg': [N, T_win, C]
           - 'pose': [N, D]
         """
-        self.paths.output_dir.mkdir(parents=True, exist_ok=True)
-        out_path = self.paths.output_dir / f"emg2pose_{split}.h5"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        out_path = self.output_dir / f"emg2pose_{split}.h5"
 
         X_all, y_all = self.build_split(split)
 
