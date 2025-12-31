@@ -15,9 +15,17 @@ from tqdm import tqdm
 
 DATASET_NAME = "Ninapro"
 
-def download_ninapro(data_root = "./data"):
+def download_ninapro(data_root = "./data", databases=None):
     try:
+        if databases is None:
+            allowed_dbs = [f"DB{i}" for i in range(1, 11)]  # All databases
+        elif isinstance(databases, str):
+            allowed_dbs = [databases.upper()]
+        else:
+            allowed_dbs = [db.upper() for db in databases]
+        
         print(f"Starting download for {DATASET_NAME}")
+        print(f"  Selected databases: {', '.join(allowed_dbs)}")
         dataset_root = Path(data_root) / DATASET_NAME
         raw_dir = dataset_root / "raw"
         preprocessed_dir = dataset_root / "preprocessed"
@@ -28,9 +36,10 @@ def download_ninapro(data_root = "./data"):
         preprocessed_dir.mkdir(parents=True, exist_ok=True)
         
         # DB1: 27 subjects
-        print("  Downloading DB1 (27 subjects)...")
-        db1_dir = raw_dir / "DB1"
-        db1_dir.mkdir(exist_ok=True)
+        if "DB1" in allowed_dbs:
+            print("  Downloading DB1 (27 subjects)...")
+            db1_dir = raw_dir / "DB1"
+            db1_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 28):
             subject_str = f"{subject_id:02d}"
             subject_dir = db1_dir / subject_str
@@ -62,7 +71,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"    Failed DB1 subject {subject_str}: {e}")
         
         # DB2: 40 subjects
-        print("  Downloading DB2 (40 subjects)...")
+        if "DB2" in allowed_dbs:
+            print("  Downloading DB2 (40 subjects)...")
         db2_dir = raw_dir / "DB2"
         db2_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 41):
@@ -96,7 +106,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"    Failed DB2 subject {subject_str}: {e}")
         
         # DB3: 11 subjects
-        print("  Downloading DB3 (11 subjects)...")
+        if "DB3" in allowed_dbs:
+            print("  Downloading DB3 (11 subjects)...")
         db3_dir = raw_dir / "DB3"
         db3_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 12):
@@ -130,7 +141,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB3 subject {subject_str}: {e}")
         
         # DB4: 10 subjects
-        print("Downloading DB4...")
+        if "DB4" in allowed_dbs:
+            print("Downloading DB4...")
         db4_dir = raw_dir / "DB4"
         db4_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 11):
@@ -156,7 +168,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB4 subject {subject_str}: {e}")
         
         # DB5: 10 subjects
-        print("Downloading DB5...")
+        if "DB5" in allowed_dbs:
+            print("Downloading DB5...")
         db5_dir = raw_dir / "DB5"
         db5_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 11):
@@ -182,7 +195,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB5 subject {subject_str}: {e}")
         
         # DB6: 10 subjects
-        print("Downloading DB6...")
+        if "DB6" in allowed_dbs:
+            print("Downloading DB6...")
         db6_dir = raw_dir / "DB6"
         db6_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 11):
@@ -208,7 +222,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB6 subject {subject_str}: {e}")
         
         # DB7: 22 subjects
-        print("Downloading DB7...")
+        if "DB7" in allowed_dbs:
+            print("Downloading DB7...")
         db7_dir = raw_dir / "DB7"
         db7_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 23):
@@ -234,7 +249,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB7 subject {subject_str}: {e}")
         
         # DB8: 12 subjects
-        print("Downloading DB8...")
+        if "DB8" in allowed_dbs:
+            print("Downloading DB8...")
         db8_dir = raw_dir / "DB8"
         db8_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 13):
@@ -260,7 +276,8 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB8 subject {subject_str}: {e}")
         
         # DB9: 77 subjects
-        print("Downloading DB9...")
+        if "DB9" in allowed_dbs:
+            print("Downloading DB9...")
         db9_dir = raw_dir / "DB9"
         db9_dir.mkdir(exist_ok=True)
         for subject_id in range(1, 78):
@@ -286,16 +303,17 @@ def download_ninapro(data_root = "./data"):
                 print(f"  Failed DB9 subject {subject_str}: {e}")
         
         # DB10: Harvard Dataverse - requires manual download
-        print("\nDB10 is hosted on Harvard Dataverse and requires manual download:")
-        db10_dir = raw_dir / "DB10"
-        db10_dir.mkdir(exist_ok=True)
-        print(f"  Please download from these links and place in {db10_dir}:")
-        print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1Z3IOM")
-        print("  - https://doi.org/10.7910/DVN/78QFZH")
-        print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/F9R33N")
-        print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/EJJ91H")
+        if "DB10" in allowed_dbs:
+            print("\nDB10 is hosted on Harvard Dataverse and requires manual download:")
+            db10_dir = raw_dir / "DB10"
+            db10_dir.mkdir(exist_ok=True)
+            print(f"  Please download from these links and place in {db10_dir}:")
+            print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1Z3IOM")
+            print("  - https://doi.org/10.7910/DVN/78QFZH")
+            print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/F9R33N")
+            print("  - https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/EJJ91H")
         
-        print(f"\nDownloaded {DATASET_NAME} (DB1-DB9)")
+        print(f"\nDownloaded {DATASET_NAME} ({', '.join(allowed_dbs)})")
         return raw_dir
         
     except Exception as e:
@@ -303,5 +321,5 @@ def download_ninapro(data_root = "./data"):
         return None
 
 if __name__ == "__main__":
-    download_ninapro(data_root="/scratch/klambert/sEMG")
+    download_ninapro(data_root="/scratch/klambert/sEMG", databases=["DB2"])
 

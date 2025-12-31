@@ -1,38 +1,38 @@
 import importlib
 
-from BioPatRec import download_biopatrec
-from CapgMyo import download_capgmyo
-from emg2pose import download_emg2pose
-from emg2qwerty import download_emg2qwerty
-from GRABMyo import download_grabmyo
-from MoveR import download_mover
-from MyoKi import download_myoki
-from Ninapro import download_ninapro
-from putEMG import download_putemg
-from SEEDS import download_seeds
-typing_dataset = importlib.import_module("typing-dataset")
+from download_data.BioPatRec import download_biopatrec
+from download_data.CapgMyo import download_capgmyo
+from download_data.emg2pose import download_emg2pose
+from download_data.emg2qwerty import download_emg2qwerty
+from download_data.GRABMyo import download_grabmyo
+from download_data.MoveR import download_mover
+from download_data.MyoKi import download_myoki
+from download_data.Ninapro import download_ninapro
+from download_data.putEMG import download_putemg
+from download_data.SEEDS import download_seeds
+typing_dataset = importlib.import_module("download_data.typing-dataset")
 download_typing = typing_dataset.download_typing
-from Zenodo import download_zenodo
+from download_data.Zenodo import download_zenodo
 
-CSL_HDEMG = importlib.import_module("CSL-HDEMG")
+CSL_HDEMG = importlib.import_module("download_data.CSL-HDEMG")
 download_csl_hdemg = CSL_HDEMG.download_csl_hdemg
 
-FORS_EMG = importlib.import_module("FORS-EMG")
+FORS_EMG = importlib.import_module("download_data.FORS-EMG")
 download_fors_emg = FORS_EMG.download_fors_emg
 
-HD_FW_KIN = importlib.import_module("HD-FW-KIN")
+HD_FW_KIN = importlib.import_module("download_data.HD-FW-KIN")
 download_hd_fw_kin = HD_FW_KIN.download_hd_fw_kin
 
-HD_sEMG = importlib.import_module("HD-sEMG")
+HD_sEMG = importlib.import_module("download_data.HD-sEMG")
 download_hd_semg = HD_sEMG.download_hd_semg
 
-multi_day = importlib.import_module("multi-day")
+multi_day = importlib.import_module("download_data.multi-day")
 download_multi_day = multi_day.download_multi_day
 
-muscle_fatigue = importlib.import_module("muscle-fatigue")
+muscle_fatigue = importlib.import_module("download_data.muscle-fatigue")
 download_muscle_fatigue = muscle_fatigue.download_muscle_fatigue
 
-UCI_EMG = importlib.import_module("UCI-EMG")
+UCI_EMG = importlib.import_module("download_data.UCI-EMG")
 download_uci_emg = UCI_EMG.download_uci_emg
 
 DATA_ROOT = "/scratch/klambert/sEMG"
