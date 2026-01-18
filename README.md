@@ -1,52 +1,87 @@
-# sEMGxRoboticHand
+# Device-Agnostic sEMG (open-sEMG-16 + Domain-General Pose Encoder)
 
-Recent advances in **surface electromyography (sEMG) decoding**, such as **[Meta’s EMG2Pose](https://arxiv.org/abs/2412.02725)**, **[EMG2QWERTY datasets](https://arxiv.org/abs/2410.20081)**, and their associated pretrained models, have demonstrated high-accuracy hand-pose and typing reconstruction. However, these breakthroughs rely on **Meta’s proprietary acquisition hardware (sEMG-RD)**, limiting reproducibility and broader utility for independent research and open development.
-
-
-## Hand Pose & Reconstruction Examples
 <p align="center">
   <img src="https://github.com/user-attachments/assets/de04b735-f96d-437d-bec9-f8423d788860" width="85%">
 </p>
 
+Recent advances in **surface electromyography (sEMG) decoding**, such as **[Meta’s EMG2Pose](https://arxiv.org/abs/2412.02725)**, **[EMG2QWERTY datasets](https://arxiv.org/abs/2410.20081)**, and their associated pretrained models, have demonstrated high-accuracy hand-pose and typing reconstruction. However, these breakthroughs rely on **Meta’s proprietary acquisition hardware (sEMG-RD)**, limiting reproducibility and broader utility for independent research and open development. This repo aims to make the hardware, data, model pipeline **transparent, modifiable, and benchmarkable**.
 
+1) **Custom acquisition hardware** (open-sEMG-16): a 16-channel, high-fidelity, wrist-wearable sEMG platform built from commercially available components, with design files + firmware to enable **end-to-end reproducibility**.
+2) **A device-/domain-robust encoder model** that maps multi-channel muscular activity to **hand pose** (joint angles / kinematic representation), with an explicit focus on **out-of-domain generalization** across:
+- unseen users (anatomical variation),
+- electrode shifts / rotations / contact changes,
+- session-to-session drift,
+- dataset / protocol mismatch.
 
-## EMG-RD Wristband & Interaction Setup
+## Prototype Wristband / Electrode Layout
 <p align="center">
   <img src="https://github.com/user-attachments/assets/6cdbc603-053d-4552-9c33-e2e7e87b085e" width="75%">
 </p>
 
+---
 
+High-level modules (see top-level folders):
 
-## Project Description
+- `Hardware/` — **open-sEMG-16** hardware stack (schematics/PCB, electrode layout, enclosure notes, firmware hooks, bring-up docs).
+- `src/` — acquisition + preprocessing utilities (streaming, windowing, filtering, normalization, dataset I/O, evaluation harness).
+- `data/` — dataset organization, conversion scripts, and format docs (raw → aligned → windowed → model-ready).
+- `hand-joint-labeling/` — tooling for pose labeling / alignment (e.g., joint definitions, coordinate frames, annotation utilities).
+- `LUNA/` — encoder model code (feature encoder + pose head) and training/eval entrypoints.
 
-To address this gap, we present **open-sEMG-16**, a fully **open-source**, **16-channel**, **wrist-wearable sEMG acquisition system** designed with specifications roughly matched to Meta’s proprietary platform, including a **4 kHz sampling rate** and a high-fidelity 24-bit analog front-end.
-The goal of this project is to replicate Meta’s sEMG-RD architecture using low-cost, commercially available components, and to evaluate whether comparable or superior performance can be achieved through optimized analog design and modular firmware.
+> **Status:** still in active development; APIs and folder contents may shift. We aim to keep experiments **config-driven** and results **reproducible** as the codebase stabilizes.
 
+---
 
-## System Architecture
+## Acquisition to Dataset to Model: End-to-End Pipeline
 
-The system integrates dual ADS1298 24-bit ADCs for synchronized multi-channel acquisition, an ESP32-S3 microcontroller for real-time Wi-Fi/BLE streaming, and dry gold-plated pogo-pin electrodes arranged circumferentially around the wrist.
+This repo is organized around a reproducible pipeline:
 
-By maintaining compatibility with vEMG2Pose and similar models, open-sEMG-16 enables direct benchmarking and reproducible validation against Meta’s datasets, serving as a practical platform for open, repeatable sEMG research.
+### 1) Acquisition & Streaming
+- synchronized multi-channel sampling
+- timestamping + packetization
+- stream integrity checks (drop detection, reordering, CRC if available)
+- host-side capture and persistent storage
 
+### 2) Signal Processing
+- band-pass filtering (and optional notch)
+- per-channel normalization (robust stats recommended)
+- windowing (fixed-length frames with overlap)
+- optional time–frequency transforms (e.g., STFT / filterbanks) for encoder variants
+- augmentation hooks to simulate electrode shift / noise / drift
+
+### 3) Label Alignment (pose supervision)
+- consistent hand model definition (joint ordering, DoFs, coordinate frame)
+- alignment utilities for pose timestamps vs EMG timestamps
+- split generation for cross-user / cross-session / cross-placement evaluation
+
+### 4) Encoder + Pose Head
+We focus on an encoder that learns a **shift-tolerant representation** of sEMG:
+
+**Input:** `X ∈ R^{C×T}` (C channels, T samples)  
+**Encoder:** temporal feature extractor + cross-channel mixing  
+**Head:** regression to pose representation (joint angles / keypoints / low-dim hand state)
+
+---
 
 ## Contributors
-- Emir Sahin
-- Lia Brahami
-- Katherine Lambert
-- Karen Chen Lai
 
+* Katherine Lambert
+* Emir Sahin
+* Lia Brahami
+* Karen Chen Lai
 
+---
 
-##  References
-**[1] EMG2Pose — Meta AI Research (2024)**
-https://arxiv.org/abs/2410.20081
+## References
 
-**[2] EMG2QWERTY — Meta AI Research (2024)**
-https://arxiv.org/abs/2410.20081
+* **emg2pose: A Large and Diverse Benchmark for Surface Electromyographic Hand Pose Estimation** (2024)
+  [https://arxiv.org/abs/2412.02725](https://arxiv.org/abs/2412.02725)
 
-**[3] A generic non-invasive neuromotor interface for human-computer interaction (2025)**
-https://www.nature.com/articles/s41586-025-09255-w
+* **emg2qwerty: A Large Dataset with Baselines for Touch Typing using Surface Electromyography** (2024)
+  [https://arxiv.org/abs/2410.20081](https://arxiv.org/abs/2410.20081)
 
-**[4] Advancing Neuromotor Interfaces by Open Sourcing Surface Electromyography (sEMG) Datasets for Pose Estimation and Surface Typing (2024)**
-https://ai.meta.com/blog/open-sourcing-surface-electromyography-datasets-neurips-2024/
+* **A generic non-invasive neuromotor interface for human-computer interaction** (Nature, 2025)
+  [https://www.nature.com/articles/s41586-025-09255-w](https://www.nature.com/articles/s41586-025-09255-w)
+
+* **Meta blog: Advancing Neuromotor Interfaces by Open Sourcing sEMG Datasets** (2024)
+  [https://ai.meta.com/blog/open-sourcing-surface-electromyography-datasets-neurips-2024/](https://ai.meta.com/blog/open-sourcing-surface-electromyography-datasets-neurips-2024/)
