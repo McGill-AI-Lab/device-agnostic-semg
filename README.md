@@ -1,7 +1,7 @@
 # Device-Agnostic sEMG (open-sEMG-16 + Domain-General Pose Encoder)
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/de04b735-f96d-437d-bec9-f8423d788860" width="85%">
+  <img src="https://github.com/user-attachments/assets/6cdbc603-053d-4552-9c33-e2e7e87b085e" width="75%">
 </p>
 
 Recent advances in **surface electromyography (sEMG) decoding**, such as **[Meta’s EMG2Pose](https://arxiv.org/abs/2412.02725)**, **[EMG2QWERTY datasets](https://arxiv.org/abs/2410.20081)**, and their associated pretrained models, have demonstrated high-accuracy hand-pose and typing reconstruction. However, these breakthroughs rely on **Meta’s proprietary acquisition hardware (sEMG-RD)**, limiting reproducibility and broader utility for independent research and open development. This repo aims to make the hardware, data, model pipeline **transparent, modifiable, and benchmarkable**.
@@ -13,9 +13,8 @@ Recent advances in **surface electromyography (sEMG) decoding**, such as **[Meta
 - session-to-session drift,
 - dataset / protocol mismatch.
 
-## Prototype Wristband / Electrode Layout
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/6cdbc603-053d-4552-9c33-e2e7e87b085e" width="75%">
+  <img src="https://github.com/user-attachments/assets/de04b735-f96d-437d-bec9-f8423d788860" width="85%">
 </p>
 
 ---
