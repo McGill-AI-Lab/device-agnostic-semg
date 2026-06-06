@@ -43,7 +43,7 @@ constexpr uint8_t REG_ID      = 0x00;
 constexpr uint8_t REG_CONFIG1 = 0x01;
 constexpr uint8_t REG_CONFIG2 = 0x02;
 constexpr uint8_t REG_CONFIG3 = 0x03;
-constexpr uint8_t REG_CH1SET  = 0x05;
+constexpr uint8_t REG_CH1SET  = 0x05; // for channel 1
 constexpr uint8_t REG_CH2SET  = 0x06;
 constexpr uint8_t REG_CH8SET  = 0x0C;
 constexpr uint8_t REG_CONFIG4 = 0x17;
@@ -90,6 +90,7 @@ void IRAM_ATTR adsDrdyISR() {
 
 void adsSelect() {
   digitalWrite(PIN_CS, LOW);
+  // pull CS low to select the ADS1298 then let a small delay to settle.
   delayMicroseconds(2);
 }
 
@@ -104,8 +105,10 @@ uint8_t adsXfer(uint8_t b) {
 }
 
 void adsCommand(uint8_t cmd) {
+ // check that this correctly starts the SCLK clock
   SPI.beginTransaction(adsSpi);
   adsSelect();
+ //TODO might need to swap beginTransaction and adsSelect if timing issue
   adsXfer(cmd);
   adsDeselect();
   SPI.endTransaction();
@@ -118,6 +121,8 @@ void adsWriteRegister(uint8_t reg, uint8_t value) {
   adsSelect();
 
   adsXfer(CMD_WREG | reg);
+  // From the datasheet : upper 3 bits are for command (CMD_REG) and lower 5 bits are for the register address (reg)
+  // 010r rrrr where 010 is WREG, and the r's make up the 5-bit address of the register to write to.
   adsXfer(0x00);      // write one register: number of registers - 1
   adsXfer(value);
 
@@ -188,8 +193,8 @@ void setupAdsInternalTestMode() {
 
   // Basic config
   adsWriteRegister(REG_CONFIG1, 0x06);  // HR mode, 500 SPS
-  adsWriteRegister(REG_CONFIG2, CONFIG2_INTERNAL_TEST_1MV_2HZ);
-  adsWriteRegister(REG_CONFIG3, CONFIG3_INTERNAL_REF_2V4);
+  adsWriteRegister(REG_CONFIG2, CONFIG2_INTERNAL_TEST_1MV_2HZ); // connect the internal test signal to CH1 through the MUX
+  adsWriteRegister(REG_CONFIG3, CONFIG3_INTERNAL_REF_2V4); // enable the internal reference. VREFN is tied to AGND, while VREFP is bypassed by capacitors
   adsWriteRegister(REG_CONFIG4, 0x00);  // continuous conversion mode
 
   // Wait for internal reference startup. Datasheet gives 150 ms typical.

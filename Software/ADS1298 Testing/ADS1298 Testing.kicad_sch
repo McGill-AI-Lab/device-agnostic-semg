@@ -2694,12 +2694,6 @@
 		(uuid "c29f0478-3664-4e28-baf8-0b5d7ec19cab")
 	)
 	(junction
-		(at 83.82 114.3)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "c58106d7-cb3c-45ed-bbfe-f24edcfb3473")
-	)
-	(junction
 		(at 90.17 24.13)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3295,6 +3289,16 @@
 		)
 		(uuid "62b0c6ad-6d76-40c2-89f2-baa48fc4320e")
 	)
+	(wire
+		(pts
+			(xy 86.36 119.38) (xy 86.36 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6415043f-0754-4a63-81e7-3ae29e43308f")
+	)
 	(polyline
 		(pts
 			(xy 62.992 44.196) (xy 62.992 57.912)
@@ -3797,16 +3801,6 @@
 	)
 	(wire
 		(pts
-			(xy 83.82 114.3) (xy 86.36 114.3)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cf200169-21b2-46e4-bd45-677d64a20a3c")
-	)
-	(wire
-		(pts
 			(xy 82.55 50.8) (xy 82.55 48.26)
 		)
 		(stroke
@@ -3834,6 +3828,16 @@
 			(type default)
 		)
 		(uuid "d40e8d43-f38e-4bae-8cc9-3589d3b5fd23")
+	)
+	(wire
+		(pts
+			(xy 87.63 119.38) (xy 86.36 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5b572d7-7cfc-4bc4-b414-d5d8618705bb")
 	)
 	(wire
 		(pts
@@ -3925,16 +3929,6 @@
 		)
 		(uuid "ecdf61a6-4bc7-4871-a013-8eaed7666dd0")
 	)
-	(wire
-		(pts
-			(xy 83.82 111.76) (xy 83.82 114.3)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f1a4687c-e927-4b61-9896-df2a5df3b8b2")
-	)
 	(polyline
 		(pts
 			(xy 62.738 63.5) (xy 62.738 82.55)
@@ -3957,7 +3951,7 @@
 	)
 	(wire
 		(pts
-			(xy 83.82 114.3) (xy 83.82 125.73)
+			(xy 83.82 111.76) (xy 83.82 125.73)
 		)
 		(stroke
 			(width 0)
@@ -4715,6 +4709,72 @@
 			(project "ADS1298 Testing"
 				(path "/f2e31a23-3ecd-40a1-a4c2-8d65099396ff"
 					(reference "#PWR012")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 87.63 119.38 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "56a76d4f-0f5c-4f27-bd96-cf460c9f90fa")
+		(property "Reference" "#PWR020"
+			(at 87.63 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "AGND"
+			(at 87.63 124.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 87.63 119.38 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 87.63 119.38 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 87.63 119.38 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "25a22519-2869-414e-bef0-182759019c05")
+		)
+		(instances
+			(project "ADS1298 Testing"
+				(path "/f2e31a23-3ecd-40a1-a4c2-8d65099396ff"
+					(reference "#PWR020")
 					(unit 1)
 				)
 			)
